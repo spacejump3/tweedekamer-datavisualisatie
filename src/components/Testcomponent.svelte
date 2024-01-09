@@ -5,7 +5,7 @@
     onMount(async () => {
         const data = await d3.json('TweedeKamer_perioden.json');
 
-        // Iterate through each object in the array
+        // Iterate through each object in the array and rename the key
         for (var i = 0; i < data.length; i++) {
             if ('Naam (Uit personen))' in data[i]) {
                 // Create a new key and assign the value of the old key
@@ -15,59 +15,72 @@
             }
         }
 
-        const groupedDataBeginjaar = d3.group(data, (d) => d['Beginjaar']);
-        const groupedDataEindjaar = d3.group(data, (d) => d['Eindjaar']);
+        // Group by Beginjaar and Beginmaand
+        const groupedData = d3.group(
+            data,
+            (d) => d['Beginjaar'],
+            (d) => d['Beginmaand']
+        );
 
         // Convert the map to an array of objects and sort by Beginjaar
-        const sortedResultBeginjaar = Array.from(
-            groupedDataBeginjaar,
-            ([beginYear, persons]) => {
+        const sortedResult = Array.from(
+            groupedData,
+            ([beginYear, monthsData]) => {
+                const sortedMonthsData = Array.from(
+                    monthsData,
+                    ([beginMonth, persons]) => {
+                        return {
+                            Beginmaand: parseInt(beginMonth, 10),
+                            Persons: persons,
+                        };
+                    }
+                ).sort((a, b) => a.Beginmaand - b.Beginmaand);
+
                 return {
                     Beginjaar: parseInt(beginYear, 10),
-                    Persons: persons,
+                    Months: sortedMonthsData,
                 };
             }
         ).sort((a, b) => a.Beginjaar - b.Beginjaar);
 
-        // Convert the map to an array of objects and sort by Eindjjaar
-        const sortedResultEindjaar = Array.from(
-            groupedDataEindjaar,
-            ([endYear, persons]) => {
-                return {
-                    Eindjaar: parseInt(endYear, 10),
-                    Persons: persons,
-                };
-            }
-        ).sort((a, b) => a.Eindjaar - b.Eindjaar);
-
-        // console.log(sortedResultBeginjaar);
-        // console.log(sortedResultEindjaar);
-
         // Process the sorted result and accumulate persons
         let accumulatedPersons = [];
-        const finalResult = sortedResultBeginjaar.map(
-            ({ Beginjaar, Persons }) => {
-                // Include persons with starting year equal to the current year
-                const personsFromCurrentYear = Persons.filter((person) => {
-                    return parseInt(person['Beginjaar'], 10) === Beginjaar;
+        const finalResult = sortedResult.map(({ Beginjaar, Months }) => {
+            // Process each month
+            const processedMonths = Months.map(({ Beginmaand, Persons }) => {
+                // Include persons with starting year and month equal to the current year and month
+                const personsFromCurrentMonth = Persons.filter((person) => {
+                    return (
+                        parseInt(person['Beginjaar'], 10) === Beginjaar &&
+                        parseInt(person['Beginmaand'], 10) === Beginmaand
+                    );
                 });
 
-                // Include persons from previous years if their ending year is equal to or later than the current year
+                // Include persons from previous years and months if their ending year is equal to or later than the current year and month
                 accumulatedPersons = accumulatedPersons.filter((person) => {
-                    return parseInt(person['Eindjaar'], 10) >= Beginjaar;
+                    return (
+                        parseInt(person['Eindjaar'], 10) > Beginjaar ||
+                        (parseInt(person['Eindjaar'], 10) === Beginjaar &&
+                            parseInt(person['Eindmaand'], 10) >= Beginmaand)
+                    );
                 });
 
-                // Add persons from the current year
+                // Add persons from the current year and month
                 accumulatedPersons = accumulatedPersons.concat(
-                    personsFromCurrentYear
+                    personsFromCurrentMonth
                 );
 
                 return {
-                    Beginjaar,
+                    Beginmaand,
                     Persons: accumulatedPersons.slice(), // Copy the accumulatedPersons array to avoid reference issues
                 };
-            }
-        );
+            });
+
+            return {
+                Beginjaar,
+                Months: processedMonths,
+            };
+        });
 
         console.log(finalResult);
     });
