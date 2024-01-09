@@ -3,22 +3,72 @@
     import * as d3 from 'd3';
 
     onMount(async () => {
-        // fetch('../TweedeKamer_perioden.json')
-        //     .then((response) => response.json())
-        //     .then((data) => {
-        //         console.log(data);
-        //     });
+        const data = await d3.json('TweedeKamer_perioden.json');
 
-        const data = d3.json('../TweedeKamer_perioden.json').then(function (d) {
-            console.log(d);
-        });
+        // Iterate through each object in the array
+        for (var i = 0; i < data.length; i++) {
+            if ('Naam (Uit personen))' in data[i]) {
+                // Create a new key and assign the value of the old key
+                data[i].Naam = data[i]['Naam (Uit personen))'];
+                // Delete the old key
+                delete data[i]['Naam (Uit personen))'];
+            }
+        }
 
-        // console.log(data)
+        const groupedDataBeginjaar = d3.group(data, (d) => d['Beginjaar']);
+        const groupedDataEindjaar = d3.group(data, (d) => d['Eindjaar']);
 
-        // const beginjaar = d3.group(TweedeKamer_perioden, d => d["Beginjaar"], d => d["Beginmaand"]);
-        // console.log(beginjaar);
+        // Convert the map to an array of objects and sort by Beginjaar
+        const sortedResultBeginjaar = Array.from(
+            groupedDataBeginjaar,
+            ([beginYear, persons]) => {
+                return {
+                    Beginjaar: parseInt(beginYear, 10),
+                    Persons: persons,
+                };
+            }
+        ).sort((a, b) => a.Beginjaar - b.Beginjaar);
 
-        // const eindjaar = d3.group(TweedeKamer_perioden, d => d['Eindjaar']);
-        // console.log(eindjaar);
+        // Convert the map to an array of objects and sort by Eindjjaar
+        const sortedResultEindjaar = Array.from(
+            groupedDataEindjaar,
+            ([endYear, persons]) => {
+                return {
+                    Eindjaar: parseInt(endYear, 10),
+                    Persons: persons,
+                };
+            }
+        ).sort((a, b) => a.Eindjaar - b.Eindjaar);
+
+        // console.log(sortedResultBeginjaar);
+        // console.log(sortedResultEindjaar);
+
+        // Process the sorted result and accumulate persons
+        let accumulatedPersons = [];
+        const finalResult = sortedResultBeginjaar.map(
+            ({ Beginjaar, Persons }) => {
+                // Include persons with starting year equal to the current year
+                const personsFromCurrentYear = Persons.filter((person) => {
+                    return parseInt(person['Beginjaar'], 10) === Beginjaar;
+                });
+
+                // Include persons from previous years if their ending year is equal to or later than the current year
+                accumulatedPersons = accumulatedPersons.filter((person) => {
+                    return parseInt(person['Eindjaar'], 10) >= Beginjaar;
+                });
+
+                // Add persons from the current year
+                accumulatedPersons = accumulatedPersons.concat(
+                    personsFromCurrentYear
+                );
+
+                return {
+                    Beginjaar,
+                    Persons: accumulatedPersons.slice(), // Copy the accumulatedPersons array to avoid reference issues
+                };
+            }
+        );
+
+        console.log(finalResult);
     });
 </script>
