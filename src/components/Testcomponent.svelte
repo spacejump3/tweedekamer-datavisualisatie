@@ -116,61 +116,61 @@
         const root = d3.hierarchy(finalResult);
         root.sum((d) => d.value);
 
-        const layout = d3
-            .treemap()
-            .size([1500, 800])
-            .padding(10)
-            // .tile(d3.treemapDice);
+        const layout = d3.treemap().size([1500, 800]).padding(1);
+        // .tile(d3.treemapDice);
 
         layout(root);
 
-        const x = d3.scaleLinear()
-        .rangeRound([0, 1500])
-        .domain([0, 1500])
+        const xScale = d3.scaleLinear().range([0, 1500]);
 
-        const y = d3.scaleLinear()
-        .rangeRound([0, 800])
-        .domain([0, 800])
+        const yScale = d3.scaleLinear().range([0, 800]);
 
-        // const func = (data) => {
+        const createTreemap = (data) => {
             const visualisation = d3
-            .select("svg")
-            .selectAll("g")
-            .data(root.children)
-            .join("g");
+                .select("svg")
+                .selectAll("g")
+                .data(data)
+                .join("g");
 
-        // Create rectangulars
-        visualisation
-            .append("rect")
-            .attr("fill", "transparent")
-            .attr("stroke", "black")
-            .attr("x", function (d) {
-                return x(d.x0);
-            })
-            .attr("y", function (d) {
-                return y(d.y0);
-            })
-            .attr("width", function (d) {
-                return x(d.x1) - x(d.x0);
-            })
-            .attr("height", function (d) {
-                return y(d.y1) - y(d.y0);
-            })
-            .on('click', (d, e) => zoom(d))
+            // Create rectangles
+            visualisation
+                .append("rect")
+                .attr("fill", "transparent")
+                .attr("stroke", "black")
+                .attr("x", function (d) {
+                    return xScale(d.x0);
+                })
+                .attr("y", function (d) {
+                    return yScale(d.y0);
+                })
+                .attr("width", function (d) {
+                    return xScale(d.x1) - xScale(d.x0);
+                })
+                .attr("height", function (d) {
+                    return yScale(d.y1) - yScale(d.y0);
+                })
+                .on("click", (e, d) => {
+                    d3.selectAll("g").remove();
+                    xScale.domain([d.x0, d.x1]);
+                    yScale.domain([d.y0, d.y1]);
+                    createTreemap(d.children);
+                });
 
-        // create text
-        visualisation
-            .append("text")
-            .text((d) => d.data["Group"])
-            .attr("x", (d) => d.x0 + 10)
-            .attr("y", (d) => d.y0 + 20);
+            // create label
+            visualisation
+                .append("text")
+                .text((d) => Object.values(d.data)[0])
+                .attr("x", (d) => xScale(d.x0) + 10)
+                .attr("y", (d) => yScale(d.y0) + 20);
+        };
 
-        const zoom = (d) => {
-            x.domain([d.x0, d.x1])
-            y.domain([d.y0, d.y1])
-        }
+        const onPageLoad = () => {
+            xScale.domain([0, 1500]);
+            yScale.domain([0, 800]);
+            createTreemap(root.children);
+        };
 
-
+        onPageLoad();
 
     });
 </script>
