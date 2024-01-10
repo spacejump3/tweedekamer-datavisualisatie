@@ -113,17 +113,20 @@
         const finalResult = { year: "root", children: tweedeKamerData };
         // console.log(finalResult);
 
+        const widthTreemap = 2000;
+        const heightTreemap = 1000;
+
         const root = d3.hierarchy(finalResult);
         root.sum((d) => d.value);
 
-        const layout = d3.treemap().size([1500, 800]).padding(1);
+        const layout = d3.treemap().size([widthTreemap, heightTreemap]);
         // .tile(d3.treemapDice);
 
         layout(root);
 
-        const xScale = d3.scaleLinear().range([0, 1500]);
+        const xScale = d3.scaleLinear().range([0, widthTreemap]);
 
-        const yScale = d3.scaleLinear().range([0, 800]);
+        const yScale = d3.scaleLinear().range([0, heightTreemap]);
 
         const createTreemap = (data) => {
             const visualisation = d3
@@ -165,8 +168,8 @@
         };
 
         const onPageLoad = () => {
-            xScale.domain([0, 1500]);
-            yScale.domain([0, 800]);
+            xScale.domain([0, widthTreemap]);
+            yScale.domain([0, heightTreemap]);
             createTreemap(root.children);
         };
 
@@ -176,5 +179,5 @@
 </script>
 
 <section>
-    <svg width="1500" height="1000"> </svg>
+    <svg width="2300" height="1500"> </svg>
 </section>
