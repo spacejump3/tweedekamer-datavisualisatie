@@ -128,17 +128,35 @@
 
         const yScale = d3.scaleLinear().range([0, heightTreemap]);
 
+        let minDepth = 1;
+
+        const updateTreemap = (d) => {
+            let newData = d3.reverse(d.descendants());
+            newData.pop();
+            minDepth = d3.min(newData, (item) => item.depth);
+
+            createTreemap(newData);
+        };
+
         const createTreemap = (data) => {
-            const visualisation = d3
-                .select("svg")
+            d3.select("svg")
                 .selectAll("g")
                 .data(data)
-                .join("g");
+                .join(
+                    (enter) => {
+                        const group = enter.append("g");
+                        group.append("rect");
+                        group.append("text");
+                    },
+                    (update) => update,
+                    (exit) => exit.remove(),
+                );
 
             // Create rectangles
-            visualisation
-                .append("rect")
-                .attr("fill", "transparent")
+            d3.selectAll("g")
+                .select("rect")
+                .attr("opacity", "0.2")
+                .attr("fill", "red")
                 .attr("stroke", "black")
                 .attr("x", function (d) {
                     return xScale(d.x0);
@@ -151,20 +169,26 @@
                 })
                 .attr("height", function (d) {
                     return yScale(d.y1) - yScale(d.y0);
-                })
-                .on("click", (e, d) => {
-                    d3.selectAll("g").remove();
-                    xScale.domain([d.x0, d.x1]);
-                    yScale.domain([d.y0, d.y1]);
-                    createTreemap(d.children);
                 });
 
             // create label
-            visualisation
-                .append("text")
-                .text((d) => Object.values(d.data)[0])
+            d3.selectAll("g")
+                .select("text")
+                .text((d) =>
+                    // only show labels on the top layer
+                    d.depth === minDepth ? Object.values(d.data)[0] : " ",
+                )
                 .attr("x", (d) => xScale(d.x0) + 10)
-                .attr("y", (d) => yScale(d.y0) + 20);
+                .attr("y", (d) => yScale(d.y0) + 20)
+                .attr("fill", "black")
+                .attr("opacity", "1");
+
+            // making it clickable and create new treemap
+            d3.selectAll("g").on("click", (e, d) => {
+                xScale.domain([d.x0, d.x1]);
+                yScale.domain([d.y0, d.y1]);
+                updateTreemap(d);
+            });
         };
 
         const onPageLoad = () => {
@@ -174,7 +198,6 @@
         };
 
         onPageLoad();
-
     });
 </script>
 
