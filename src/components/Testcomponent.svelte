@@ -185,9 +185,14 @@
 
             // making it clickable and create new treemap
             d3.selectAll("g").on("click", (e, d) => {
-                xScale.domain([d.x0, d.x1]);
-                yScale.domain([d.y0, d.y1]);
-                updateTreemap(d);
+                // stop clicking when clicking on members
+                if (d.depth !== 4) {
+                    xScale.domain([d.x0, d.x1]);
+                    yScale.domain([d.y0, d.y1]);
+                    updateTreemap(d);
+                } else {
+                    return;
+                }
             });
         };
 
