@@ -24,6 +24,12 @@
             (d) => d["Beginmaand"],
         );
 
+        function getMonthName(monthNumber) {
+            const date = new Date();
+            date.setMonth(monthNumber - 1);
+            return date.toLocaleString("nl-NL", { month: "long" });
+        }
+
         // Convert the map to an array of objects and sort by Beginjaar
         const sortedResult = Array.from(groupedData, ([group, yearsData]) => {
             const sortedYearsData = Array.from(
@@ -33,7 +39,9 @@
                         monthsData,
                         ([beginMonth, persons]) => {
                             return {
-                                Beginmaand: parseInt(beginMonth, 10),
+                                Beginmaand: getMonthName(
+                                    parseInt(beginMonth, 10),
+                                ),
                                 children: persons,
                             };
                         },
@@ -63,11 +71,13 @@
                         // Include persons with starting year and month equal to the current year and month
                         const personsFromCurrentMonth = children.filter(
                             (person) => {
+                                person["Beginmaand"] = getMonthName(
+                                    person["Beginmaand"],
+                                );
                                 return (
                                     parseInt(person["Beginjaar"], 10) ===
                                         Beginjaar &&
-                                    parseInt(person["Beginmaand"], 10) ===
-                                        Beginmaand
+                                    person["Beginmaand"] === Beginmaand
                                 );
                             },
                         );
@@ -75,13 +85,13 @@
                         // Include persons from previous years and months if their ending year is equal to or later than the current year and month
                         accumulatedPersons = accumulatedPersons.filter(
                             (person) => {
+                                person["Eindmaand"] = getMonthName(person["Eindmaand"]);
                                 return (
                                     parseInt(person["Eindjaar"], 10) >
                                         Beginjaar ||
                                     (parseInt(person["Eindjaar"], 10) ===
                                         Beginjaar &&
-                                        parseInt(person["Eindmaand"], 10) >=
-                                            Beginmaand)
+                                        person["Eindmaand"] >= Beginmaand)
                                 );
                             },
                         );
