@@ -85,7 +85,9 @@
                         // Include persons from previous years and months if their ending year is equal to or later than the current year and month
                         accumulatedPersons = accumulatedPersons.filter(
                             (person) => {
-                                person["Eindmaand"] = getMonthName(person["Eindmaand"]);
+                                person["Eindmaand"] = getMonthName(
+                                    person["Eindmaand"],
+                                );
                                 return (
                                     parseInt(person["Eindjaar"], 10) >
                                         Beginjaar ||
@@ -138,12 +140,12 @@
 
         const yScale = d3.scaleLinear().range([0, heightTreemap]);
 
-        let minDepth = 1;
+        let topLayer = 1;
 
         const updateTreemap = (d) => {
             let newData = d3.reverse(d.descendants());
             newData.pop();
-            minDepth = d3.min(newData, (item) => item.depth);
+            topLayer = d3.min(newData, (item) => item.depth);
 
             createTreemap(newData);
         };
@@ -181,13 +183,23 @@
                     return yScale(d.y1) - yScale(d.y0);
                 });
 
+            const getLabels = (d) => {
+                if (d.depth === 4) {
+                    return Object.values(d.data)[12];
+                } else {
+                    return Object.values(d.data)[0];
+                }
+            };
+
             // create label
             d3.selectAll("g")
                 .select("text")
-                .text((d) =>
+                .text((d) => {
                     // only show labels on the top layer
-                    d.depth === minDepth ? Object.values(d.data)[0] : " ",
-                )
+                    if (d.depth === topLayer) {
+                        return getLabels(d);
+                    }
+                })
                 .attr("x", (d) => xScale(d.x0) + 10)
                 .attr("y", (d) => yScale(d.y0) + 20)
                 .attr("fill", "black")
