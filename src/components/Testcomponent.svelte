@@ -19,7 +19,7 @@
         // Group by Beginjaar and Beginmaand
         const groupedData = d3.group(
             data,
-            (d) => Math.floor((parseInt(d["Beginjaar"], 10) - 1815) / 16), // Group every 16 years starting from 1815
+            (d) => Math.floor((parseInt(d["Beginjaar"], 10) - 1815) / 15), // Group every 15 years starting from 1815
             (d) => d["Beginjaar"],
             (d) => d["Beginmaand"],
         );
@@ -60,9 +60,16 @@
             };
         }).sort((a, b) => a.Group - b.Group);
 
+        const nameGroupByYears = (children) => {
+            let firstYear = children[0]["Beginjaar"];
+            let lastYear = children[children.length - 1]["Beginjaar"];
+            return `${firstYear} - ${lastYear}`;
+        };
+
         // Process the sorted result and accumulate persons
         let accumulatedPersons = [];
         const tweedeKamerData = sortedResult.map(({ Group, children }) => {
+            Group = nameGroupByYears(children);
             // Process each year
             const processedYears = children.map(({ Beginjaar, children }) => {
                 // Process each month
