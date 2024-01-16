@@ -19,10 +19,16 @@
         // Group by Beginjaar and Beginmaand
         const groupedData = d3.group(
             data,
-            (d) => Math.floor((parseInt(d['Beginjaar'], 10) - 1815) / 16), // Group every 16 years starting from 1815
+            (d) => Math.floor((parseInt(d['Beginjaar'], 10) - 1815) / 15), // Group every 15 years starting from 1815
             (d) => d['Beginjaar'],
             (d) => d['Beginmaand']
         );
+
+        function getMonthName(monthNumber) {
+            const date = new Date();
+            date.setMonth(monthNumber - 1);
+            return date.toLocaleString('nl-NL', { month: 'long' });
+        }
 
         // Convert the map to an array of objects and sort by Beginjaar
         const sortedResult = Array.from(groupedData, ([group, yearsData]) => {
@@ -33,7 +39,9 @@
                         monthsData,
                         ([beginMonth, persons]) => {
                             return {
-                                Beginmaand: parseInt(beginMonth, 10),
+                                Beginmaand: getMonthName(
+                                    parseInt(beginMonth, 10)
+                                ),
                                 children: persons,
                             };
                         }
@@ -52,9 +60,16 @@
             };
         }).sort((a, b) => a.Group - b.Group);
 
+        const nameGroupByYears = (children) => {
+            let firstYear = children[0]['Beginjaar'];
+            let lastYear = children[children.length - 1]['Beginjaar'];
+            return `${firstYear} - ${lastYear}`;
+        };
+
         // Process the sorted result and accumulate persons
         let accumulatedPersons = [];
         const tweedeKamerData = sortedResult.map(({ Group, children }) => {
+            Group = nameGroupByYears(children);
             // Process each year
             const processedYears = children.map(({ Beginjaar, children }) => {
                 // Process each month
@@ -63,11 +78,13 @@
                         // Include persons with starting year and month equal to the current year and month
                         const personsFromCurrentMonth = children.filter(
                             (person) => {
+                                person['Beginmaand'] = getMonthName(
+                                    person['Beginmaand']
+                                );
                                 return (
                                     parseInt(person['Beginjaar'], 10) ===
                                         Beginjaar &&
-                                    parseInt(person['Beginmaand'], 10) ===
-                                        Beginmaand
+                                    person['Beginmaand'] === Beginmaand
                                 );
                             }
                         );
@@ -75,13 +92,15 @@
                         // Include persons from previous years and months if their ending year is equal to or later than the current year and month
                         accumulatedPersons = accumulatedPersons.filter(
                             (person) => {
+                                person['Eindmaand'] = getMonthName(
+                                    person['Eindmaand']
+                                );
                                 return (
                                     parseInt(person['Eindjaar'], 10) >
                                         Beginjaar ||
                                     (parseInt(person['Eindjaar'], 10) ===
                                         Beginjaar &&
-                                        parseInt(person['Eindmaand'], 10) >=
-                                            Beginmaand)
+                                        person['Eindmaand'] >= Beginmaand)
                                 );
                             }
                         );
@@ -113,71 +132,111 @@
         const finalResult = { year: 'root', children: tweedeKamerData };
         // console.log(finalResult);
 
+        const widthTreemap = 2000;
+        const heightTreemap = 1000;
+
         const root = d3.hierarchy(finalResult);
         root.sum((d) => d.value);
 
-        const layout = d3.treemap().size([1500, 800]).padding(10);
+        const layout = d3.treemap().size([widthTreemap, heightTreemap]);
         // .tile(d3.treemapDice);
 
         layout(root);
 
-        const x = d3.scaleLinear().rangeRound([0, 1500]).domain([0, 1500]);
+        const xScale = d3.scaleLinear().range([0, widthTreemap]);
 
-        const y = d3.scaleLinear().rangeRound([0, 800]).domain([0, 800]);
+        const yScale = d3.scaleLinear().range([0, heightTreemap]);
 
-        // const func = (data) => {
-        const visualisation = d3
-            .select('svg')
-            .selectAll('g')
-            .data(root.children)
-            .join('g');
+        let topLayer = 1;
 
-        // Create rectangulars
-        visualisation
-            .append('rect')
-            .attr('fill', 'transparent')
-            .attr('stroke', 'black')
-            .attr('x', function (d) {
-                return x(d.x0);
-            })
-            .attr('y', function (d) {
-                return y(d.y0);
-            })
-            .attr('width', function (d) {
-                return x(d.x1) - x(d.x0);
-            })
-            .attr('height', function (d) {
-                return y(d.y1) - y(d.y0);
-            })
-            .on('mouseover', function () {
-                d3.select(this.parentNode).transition(.1)
-                    .selectAll('rect')
-                    .attr('fill', 'grey')
-                    .attr('cursor', 'pointer');
-            })
-            .on('mouseout', function () {
-                d3.select(this.parentNode).transition(.1)
-                    .selectAll('rect')
-                    .attr('fill', 'transparent');
-            })
-            .on('click', (d, e) => zoom(d));
+        const updateTreemap = (d) => {
+            let newData = d3.reverse(d.descendants());
+            newData.pop();
+            topLayer = d3.min(newData, (item) => item.depth);
 
-        // create text
-        visualisation
-            .append('text')
-            .text((d) => d.data['Group'])
-            .attr('x', (d) => d.x0 + 10)
-            .attr('y', (d) => d.y0 + 20);
-
-        const zoom = (d) => {
-            x.domain([d.x0, d.x1]);
-            y.domain([d.y0, d.y1]);
+            createTreemap(newData);
         };
+
+        const createTreemap = (data) => {
+            d3.select('svg')
+                .selectAll('g')
+                .data(data)
+                .join(
+                    (enter) => {
+                        const group = enter.append('g');
+                        group.append('rect');
+                        group.append('text');
+                    },
+                    (update) => update,
+                    (exit) => exit.remove()
+                );
+
+            // Create rectangles
+            d3.selectAll('g')
+                .select('rect')
+                .attr('opacity', '0.2')
+                .attr('fill', 'red')
+                .attr('stroke', 'black')
+                .attr('x', function (d) {
+                    return xScale(d.x0);
+                })
+                .attr('y', function (d) {
+                    return yScale(d.y0);
+                })
+                .attr('width', function (d) {
+                    return xScale(d.x1) - xScale(d.x0);
+                })
+                .attr('height', function (d) {
+                    return yScale(d.y1) - yScale(d.y0);
+                });
+
+            const getLabels = (d) => {
+                if (d.depth === 4) {
+                    return Object.values(d.data)[12];
+                } else {
+                    return Object.values(d.data)[0];
+                }
+            };
+
+            // create label
+            d3.selectAll('g')
+                .select('text')
+                .text((d) => {
+                    // only show labels on the top layer
+                    if (d.depth === topLayer) {
+                        return getLabels(d);
+                    }
+                })
+                .attr('x', (d) => xScale(d.x0) + 10)
+                .attr('y', (d) => yScale(d.y0) + 20)
+                .attr('fill', 'black')
+                .attr('opacity', '1');
+
+            // making it clickable and create new treemap
+            d3.selectAll('g').on('click', (e, d) => {
+                // stop clicking when clicking on members
+                if (d.depth !== 4) {
+                    xScale.domain([d.x0, d.x1]);
+                    yScale.domain([d.y0, d.y1]);
+                    updateTreemap(d);
+                } else {
+                    return;
+                }
+            });
+        };
+
+        const onPageLoad = () => {
+            xScale.domain([0, widthTreemap]);
+            yScale.domain([0, heightTreemap]);
+            createTreemap(root.children);
+        };
+
+        onPageLoad();
     });
 </script>
 
 <section>
-    <svg width="1500" height="800"> </svg>
+    <svg width="2300" height="1500"> </svg>
 </section>
 
 <style>
