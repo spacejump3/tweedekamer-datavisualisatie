@@ -150,11 +150,65 @@
         let topLayer = 1;
 
         const updateTreemap = (d) => {
-            let newData = d3.reverse(d.descendants());
-            newData.pop();
+            xScale.domain([d.x0, d.x1]);
+            yScale.domain([d.y0, d.y1]);
+            let newData;
+            if (d.depth === 0) {
+                newData = d.children;
+            } else {
+                newData = d3.reverse(d.descendants());
+                newData.pop();
+            }
             topLayer = d3.min(newData, (item) => item.depth);
-
             createTreemap(newData);
+        };
+
+        const getLabels = (d) => {
+            if (d.depth === 4) {
+                return Object.values(d.data)[12];
+            } else {
+                return Object.values(d.data)[0];
+            }
+        };
+
+        let breadcrumbsArr = [];
+
+        const removeBreadcrumbs = (d) => {
+            const findIndex = breadcrumbsArr.indexOf(d);
+            breadcrumbsArr.splice(findIndex + 1);
+            addBreadcrumb(breadcrumbsArr);
+        };
+
+        const createBreadcumbs = (d) => {
+            const breadcrumName = getLabels(d);
+            breadcrumbsArr.push({ name: breadcrumName, node: d });
+            addBreadcrumb(breadcrumbsArr);
+        };
+
+        const addBreadcrumb = (breadcrumbArr) => {
+            d3.select("#breadcrumps")
+                .selectAll("li")
+                .data(breadcrumbArr)
+                .join(
+                    (enter) => {
+                        const select = enter.append("li");
+                        select.append("a");
+                        select.append("span");
+                    },
+                    (update) => update,
+                    (exit) => exit.remove(),
+                );
+
+            d3.selectAll("ul a")
+                .attr("href", "#")
+                .text((d) => d["name"])
+                .on("click", (e, d) => {
+                    updateTreemap(d["node"]);
+                    removeBreadcrumbs(d);
+                });
+
+            d3.selectAll("span").text(" >");
+
         };
 
         const createTreemap = (data) => {
@@ -190,14 +244,6 @@
                     return yScale(d.y1) - yScale(d.y0);
                 });
 
-            const getLabels = (d) => {
-                if (d.depth === 4) {
-                    return Object.values(d.data)[12];
-                } else {
-                    return Object.values(d.data)[0];
-                }
-            };
-
             // create label
             d3.selectAll("g")
                 .select("text")
@@ -216,9 +262,8 @@
             d3.selectAll("g").on("click", (e, d) => {
                 // stop clicking when clicking on members
                 if (d.depth !== 4) {
-                    xScale.domain([d.x0, d.x1]);
-                    yScale.domain([d.y0, d.y1]);
                     updateTreemap(d);
+                    createBreadcumbs(d);
                 } else {
                     return;
                 }
@@ -229,6 +274,7 @@
             xScale.domain([0, widthTreemap]);
             yScale.domain([0, heightTreemap]);
             createTreemap(root.children);
+            createBreadcumbs(root);
         };
 
         onPageLoad();
@@ -236,5 +282,6 @@
 </script>
 
 <section>
+    <ul id="breadcrumps"></ul>
     <svg width="2300" height="1500"> </svg>
 </section>
