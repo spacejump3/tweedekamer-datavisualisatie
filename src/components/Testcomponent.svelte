@@ -150,20 +150,27 @@
         let topLayer = 1;
 
         const updateTreemap = (d) => {
+            // change scale based on new dimensions
             xScale.domain([d.x0, d.x1]);
             yScale.domain([d.y0, d.y1]);
             let newData;
+            // update new data
+            // if at 'root' only show children. Else get descendants.
             if (d.depth === 0) {
                 newData = d.children;
             } else {
                 newData = d3.reverse(d.descendants());
                 newData.pop();
             }
+            // update top layer of treemap
             topLayer = d3.min(newData, (item) => item.depth);
+            // create treemap with new data
             createTreemap(newData);
         };
 
+        // get names of the labels
         const getLabels = (d) => {
+            // bottom layer (4 / members) is at index 12. The rest at 0
             if (d.depth === 4) {
                 return Object.values(d.data)[12];
             } else {
@@ -174,18 +181,24 @@
         let breadcrumbsArr = [];
 
         const removeBreadcrumbs = (d) => {
+            // remove excess breadcrumbs in array
             const findIndex = breadcrumbsArr.indexOf(d);
             breadcrumbsArr.splice(findIndex + 1);
-            addBreadcrumb(breadcrumbsArr);
+            // create new breadcrumb on page with updated array
+            createBreadcrumbs(breadcrumbsArr);
         };
 
-        const createBreadcumbs = (d) => {
+        const updateBreadcrumbs = (d) => {
+            // get name of the new breadcrumb
             const breadcrumName = getLabels(d);
+            // push object to array containing name of breadcrumb and Node / data
             breadcrumbsArr.push({ name: breadcrumName, node: d });
-            addBreadcrumb(breadcrumbsArr);
+            // create new breadcrumb on page with updated array
+            createBreadcrumbs(breadcrumbsArr);
         };
 
-        const addBreadcrumb = (breadcrumbArr) => {
+        const createBreadcrumbs = (breadcrumbArr) => {
+            // make breadcrumbs appear on page
             d3.select("#breadcrumps")
                 .selectAll("li")
                 .data(breadcrumbArr)
@@ -203,6 +216,7 @@
                 .attr("href", "#")
                 .text((d) => d["name"])
                 .on("click", (e, d) => {
+                    // update treemap after clicking on a breadcrumb
                     updateTreemap(d["node"]);
                     removeBreadcrumbs(d);
                 });
@@ -212,6 +226,7 @@
         };
 
         const createTreemap = (data) => {
+            // make treemap appear on page
             d3.select("svg")
                 .selectAll("g")
                 .data(data)
@@ -263,7 +278,7 @@
                 // stop clicking when clicking on members
                 if (d.depth !== 4) {
                     updateTreemap(d);
-                    createBreadcumbs(d);
+                    updateBreadcrumbs(d);
                 } else {
                     return;
                 }
@@ -274,7 +289,7 @@
             xScale.domain([0, widthTreemap]);
             yScale.domain([0, heightTreemap]);
             createTreemap(root.children);
-            createBreadcumbs(root);
+            updateBreadcrumbs(root);
         };
 
         onPageLoad();
