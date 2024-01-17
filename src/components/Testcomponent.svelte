@@ -130,22 +130,33 @@
         });
 
         const finalResult = { year: 'root', children: tweedeKamerData };
-        // console.log(finalResult);
+        console.log(finalResult);
 
-        const widthTreemap = 2000;
-        const heightTreemap = 1000;
+        const widthTreemap = 1800;
+        const heightTreemap = 700;
+
+        const squareSize = 50;
 
         const root = d3.hierarchy(finalResult);
         root.sum((d) => d.value);
 
-        const layout = d3.treemap().size([widthTreemap, heightTreemap]);
-        // .tile(d3.treemapDice);
+        const layout = d3
+            .treemap()
+            .size([widthTreemap, heightTreemap])
+            .tile(d3.treemapBinary);
 
         layout(root);
 
         const xScale = d3.scaleLinear().range([0, widthTreemap]);
-
         const yScale = d3.scaleLinear().range([0, heightTreemap]);
+
+        const fractieScale = d3.scaleOrdinal()
+            .domain(
+            data.map(function (d) {
+                return d.fractie;
+            })
+        )
+            .range(['#FF0000', '#00FF00', '#0000FF'])
 
         let topLayer = 1;
 
@@ -174,21 +185,37 @@
             // Create rectangles
             d3.selectAll('g')
                 .select('rect')
-                .attr('opacity', '0.2')
-                .attr('fill', 'red')
-                .attr('stroke', 'black')
-                .attr('x', function (d) {
-                    return xScale(d.x0);
+                .attr('opacity', '.2')
+                .attr('fill', function (d) {
+                    return fractieScale(d.Fractie);
                 })
-                .attr('y', function (d) {
-                    return yScale(d.y0);
+                // hover
+                .on('mouseover', function () {
+                    d3.select(this.parentNode)
+                        .selectAll('rect')
+                        .attr('opacity', '1')
+                        .attr('stroke-width', '4');
                 })
-                .attr('width', function (d) {
-                    return xScale(d.x1) - xScale(d.x0);
+                .on('mouseout', function () {
+                    d3.select(this.parentNode)
+                        .selectAll('rect')
+                        .transition(0.5)
+                        .attr('opacity', '.2')
+                        .attr('stroke-width', '2');
                 })
-                .attr('height', function (d) {
-                    return yScale(d.y1) - yScale(d.y0);
-                });
+
+                .attr('stroke', 'white')
+                .attr('stroke-width', '3')
+                .attr('x', (d) => xScale(d.x0))
+                .attr('y', (d) => yScale(d.y0))
+                // .attr('width', (d) =>
+                //     d.depth === 4 ? squareSize : xScale(d.x1) - xScale(d.x0)
+                // )
+                // .attr('height', (d) =>
+                //     d.depth === 4 ? squareSize : yScale(d.y1) - yScale(d.y0)
+                // );
+                .attr('width', (d) => xScale(d.x1) - xScale(d.x0))
+                .attr('height', (d) => yScale(d.y1) - yScale(d.y0));
 
             const getLabels = (d) => {
                 if (d.depth === 4) {
@@ -236,11 +263,13 @@
 </script>
 
 <section>
-    <svg width="2300" height="1500"> </svg>
+    <svg width="1800" height="700"> </svg>
 </section>
 
 <style>
     svg {
-        background: #0001;
+        background: white;
+        margin: auto;
+        display: block;
     }
 </style>
