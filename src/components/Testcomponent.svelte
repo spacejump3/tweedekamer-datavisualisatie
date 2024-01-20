@@ -6,6 +6,13 @@
         const data = await d3.json("TweedeKamer_perioden.json");
         data.forEach((item) => (item.value = 1));
 
+        // turn month number to a string name
+        function getMonthName(monthNumber) {
+            const date = new Date();
+            date.setMonth(monthNumber - 1);
+            return date.toLocaleString("nl-NL", { month: "long" });
+        }
+
         // Iterate through each object in the array and rename the key
         for (var i = 0; i < data.length; i++) {
             if ("Naam (Uit personen))" in data[i]) {
@@ -13,6 +20,20 @@
                 data[i].Naam = data[i]["Naam (Uit personen))"];
                 // Delete the old key
                 delete data[i]["Naam (Uit personen))"];
+            }
+
+            if ("Eindmaand" in data[i]) {
+                // Create a new key and assign the value of the old key
+                data[i]["Eindmaand"] = getMonthName(data[i]["Eindmaand"]);
+                // Delete the old key
+                // delete data[i]["Naam (Uit personen))"];
+            }
+
+            if ("Beginmaand" in data[i]) {
+                // Create a new key and assign the value of the old key
+                data[i]["Beginmaand"] = getMonthName(data[i]["Beginmaand"]);
+                // Delete the old key
+                // delete data[i]["Naam (Uit personen))"];
             }
         }
 
@@ -30,13 +51,6 @@
             (d) => d["Eindmaand"],
         );
 
-        // turn month number to a string name
-        function getMonthName(monthNumber) {
-            const date = new Date();
-            date.setMonth(monthNumber - 1);
-            return date.toLocaleString("nl-NL", { month: "long" });
-        }
-
         // turn groupedDataEndyear internMap to an Array
         const sortEndYear = Array.from(
             groupedDataEndyear,
@@ -45,7 +59,7 @@
                     monthsData,
                     ([endMonth, persons]) => {
                         return {
-                            Beginmaand: getMonthName(parseInt(endMonth, 10)),
+                            Beginmaand: endMonth,
                             children: persons,
                         };
                     },
@@ -65,7 +79,7 @@
                     monthsData,
                     ([beginMonth, persons]) => {
                         return {
-                            Beginmaand: getMonthName(parseInt(beginMonth, 10)),
+                            Beginmaand: beginMonth,
                             children: persons,
                         };
                     },
@@ -285,7 +299,7 @@
             d3.selectAll("g")
                 .select("rect")
                 .attr("opacity", "0.2")
-                .attr("fill", "red")
+                .attr("fill", (d) => d.depth === 4 && d.data["Eindmaand"] === d.parent.data["Beginmaand"] ? "black" : "red") // if it's a members endmonth, give color black
                 .attr("stroke", "black")
                 .attr("x", function (d) {
                     return xScale(d.x0);
