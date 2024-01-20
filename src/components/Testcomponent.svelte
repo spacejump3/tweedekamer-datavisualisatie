@@ -17,152 +17,194 @@
         }
 
         // Group by Beginjaar and Beginmaand
-        const groupedData = d3.group(
+        const groupedDataBeginyear = d3.group(
             data,
-            (d) => Math.floor((parseInt(d["Beginjaar"], 10) - 1815) / 15), // Group every 15 years starting from 1815
             (d) => d["Beginjaar"],
             (d) => d["Beginmaand"],
         );
 
+        // Group by Eindjaar en Eindmaand
+        const groupedDataEndyear = d3.group(
+            data,
+            (d) => d["Eindjaar"],
+            (d) => d["Eindmaand"],
+        );
+
+        // turn month number to a string name
         function getMonthName(monthNumber) {
             const date = new Date();
             date.setMonth(monthNumber - 1);
             return date.toLocaleString("nl-NL", { month: "long" });
         }
 
-        // Convert the map to an array of objects and sort by Beginjaar
-        const sortedResult = Array.from(groupedData, ([group, yearsData]) => {
-            const sortedYearsData = Array.from(
-                yearsData,
-                ([beginYear, monthsData]) => {
-                    const sortedMonthsData = Array.from(
-                        monthsData,
-                        ([beginMonth, persons]) => {
-                            return {
-                                Beginmaand: getMonthName(
-                                    parseInt(beginMonth, 10),
-                                ),
-                                children: persons,
-                            };
-                        },
-                    ).sort((a, b) => a.Beginmaand - b.Beginmaand);
+        // turn groupedDataEndyear internMap to an Array
+        const sortEndYear = Array.from(
+            groupedDataEndyear,
+            ([endYear, monthsData]) => {
+                const sortedMonthsData = Array.from(
+                    monthsData,
+                    ([endMonth, persons]) => {
+                        return {
+                            Beginmaand: getMonthName(parseInt(endMonth, 10)),
+                            children: persons,
+                        };
+                    },
+                );
+                return {
+                    Beginjaar: parseInt(endYear, 10),
+                    children: sortedMonthsData,
+                };
+            },
+        );
 
-                    return {
-                        Beginjaar: parseInt(beginYear, 10),
-                        children: sortedMonthsData,
-                    };
-                },
-            ).sort((a, b) => a.Beginjaar - b.Beginjaar);
+        // Convert the map to an array of objects and sort by Beginjaar
+        const sortBeginyear = Array.from(
+            groupedDataBeginyear,
+            ([beginYear, monthsData]) => {
+                const sortedMonthsData = Array.from(
+                    monthsData,
+                    ([beginMonth, persons]) => {
+                        return {
+                            Beginmaand: getMonthName(parseInt(beginMonth, 10)),
+                            children: persons,
+                        };
+                    },
+                ).sort((a, b) => a.Beginmaand - b.Beginmaand);
+
+                return {
+                    Beginjaar: parseInt(beginYear, 10),
+                    children: sortedMonthsData,
+                };
+            },
+        ).sort((a, b) => a.Beginjaar - b.Beginjaar);
+
+        console.log("sortedResult: ");
+        console.log(sortBeginyear);
+
+        // merge sortBeginyear and sortEndYear by year and month
+        const test = sortBeginyear.map((beginjaar) => {
+            sortEndYear.map((endYear) => {
+                if (endYear["Beginjaar"] === beginjaar["Beginjaar"]) {
+                    // check if sortEndYear contains new months that do not exist in sortBeginyear and put these in filter array
+                    let filter = endYear["children"].filter((months2) => {
+                        return !beginjaar["children"].some(
+                            (month1) =>
+                                months2["Beginmaand"] === month1["Beginmaand"],
+                        );
+                    });
+
+                    filter = filter.flat();
+
+                    // reassign beginjaar["children"] with beginjaar["children"] and filter to add these extra months for each year
+                    beginjaar["children"] = [
+                        ...beginjaar["children"],
+                        ...filter,
+                    ];
+
+                    beginjaar["children"].map((beginmaand) => {
+                        endYear["children"].map((endMonth) => {
+                            // if months are the same between sortEndYear and sortBeginyear, merge them together and reassign beginmaand["children"]
+                            if (
+                                endMonth["Beginmaand"] ===
+                                beginmaand["Beginmaand"]
+                            ) {
+                                beginmaand["children"] = [
+                                    ...beginmaand["children"],
+                                    ...endMonth["children"],
+                                ];
+                            }
+                        });
+
+                        return {
+                            beginmaand: beginmaand,
+                            children: beginmaand["children"],
+                        };
+                    });
+                }
+            });
 
             return {
-                Group: group,
-                children: sortedYearsData,
+                Beginjaar: beginjaar["Beginjaar"],
+                children: beginjaar["children"],
             };
-        }).sort((a, b) => a.Group - b.Group);
+        });
 
+        // find if sortEndYear has years that are not included in sortBeginyear and save them in new array
+        let newEndYears = sortEndYear.filter(
+            (obj1) =>
+                !sortBeginyear.some(
+                    (obj2) => obj1["Beginjaar"] === obj2["Beginjaar"],
+                ),
+        );
+
+        // push these new years into array and sort them
+        test.push(...newEndYears);
+        test.sort((a, b) => {
+            return a.Beginjaar - b.Beginjaar;
+        });
+
+        // create groups of 15 after all sortEndYear and sortBeginyear has been succefully merged together. creates an internMap
+        const grouping2 = d3.group(
+            test,
+            (d) => Math.floor((parseInt(d["Beginjaar"], 10) - 1815) / 15), // Group every 15 years starting from 1815
+        );
+
+        // get the range of years for first treemap
         const nameGroupByYears = (children) => {
             let firstYear = children[0]["Beginjaar"];
             let lastYear = children[children.length - 1]["Beginjaar"];
             return `${firstYear} - ${lastYear}`;
         };
 
-        // Process the sorted result and accumulate persons
-        let accumulatedPersons = [];
-        const tweedeKamerData = sortedResult.map(({ Group, children }) => {
-            Group = nameGroupByYears(children);
-            // Process each year
-            const processedYears = children.map(({ Beginjaar, children }) => {
-                // Process each month
-                const processedMonths = children.map(
-                    ({ Beginmaand, children }) => {
-                        // Include persons with starting year and month equal to the current year and month
-                        const personsFromCurrentMonth = children.filter(
-                            (person) => {
-                                person["Beginmaand"] = getMonthName(
-                                    person["Beginmaand"],
-                                );
-                                return (
-                                    parseInt(person["Beginjaar"], 10) ===
-                                        Beginjaar &&
-                                    person["Beginmaand"] === Beginmaand
-                                );
-                            },
-                        );
-
-                        // Include persons from previous years and months if their ending year is equal to or later than the current year and month
-                        accumulatedPersons = accumulatedPersons.filter(
-                            (person) => {
-                                person["Eindmaand"] = getMonthName(
-                                    person["Eindmaand"],
-                                );
-                                return (
-                                    parseInt(person["Eindjaar"], 10) >
-                                        Beginjaar ||
-                                    (parseInt(person["Eindjaar"], 10) ===
-                                        Beginjaar &&
-                                        person["Eindmaand"] >= Beginmaand)
-                                );
-                            },
-                        );
-
-                        // Add persons from the current year and month
-                        accumulatedPersons = accumulatedPersons.concat(
-                            personsFromCurrentMonth,
-                        );
-
-                        return {
-                            Beginmaand,
-                            children: accumulatedPersons.slice(), // Copy the accumulatedPersons array to avoid reference issues
-                        };
-                    },
-                );
-
-                return {
-                    Beginjaar,
-                    children: processedMonths,
-                };
-            });
-
+        // turn internMap of grouping into an array
+        const tweedeKamerData = Array.from(grouping2, ([Group, children]) => {
             return {
-                Group,
-                children: processedYears,
+                group: nameGroupByYears(children),
+                children: children,
             };
         });
 
+        // create object with a root to make it ready for a treemap
         const finalResult = { year: "root", children: tweedeKamerData };
-        // console.log(finalResult);
 
+        // 2000
+        // 1000
         const widthTreemap = 2000;
         const heightTreemap = 1000;
 
+        // create hierarchy of data (node elements) and set value of what needs to be counted in treemap
         const root = d3.hierarchy(finalResult);
+        // count all the d.value elements of 1
         root.sum((d) => d.value);
 
+        // create treemap layout and set size
         const layout = d3.treemap().size([widthTreemap, heightTreemap]);
         // .tile(d3.treemapDice);
 
         layout(root);
 
+        // create x and y scales
         const xScale = d3.scaleLinear().range([0, widthTreemap]);
-
         const yScale = d3.scaleLinear().range([0, heightTreemap]);
 
+        // the top layer of the treemap that can be clicked on
         let topLayer = 1;
 
+        // get new data when new treemap is about to be created
         const updateTreemap = (d) => {
             // change scale based on new dimensions
             xScale.domain([d.x0, d.x1]);
             yScale.domain([d.y0, d.y1]);
             let newData;
             // update new data
-            // if at 'root' only show children. Else get descendants.
+            // if at top layer (root / 0) only show children. Else also get descendants.
             if (d.depth === 0) {
                 newData = d.children;
             } else {
                 newData = d3.reverse(d.descendants());
                 newData.pop();
             }
-            // update top layer of treemap
+            // update top layer of treemap that can be clicked on
             topLayer = d3.min(newData, (item) => item.depth);
             // create treemap with new data
             createTreemap(newData);
@@ -222,7 +264,6 @@
                 });
 
             d3.selectAll("span").text(" >");
-
         };
 
         const createTreemap = (data) => {
@@ -285,10 +326,30 @@
             });
         };
 
+        d3.select("#fractieFilter").on("change", () => {
+            // turn on filter
+
+            const isChecked = d3.select("#fractieFilter").property("checked");
+            if (isChecked) {
+                const fracties = d3.group(data, (d) => d["Fractie"]);
+
+                const colorScale = d3
+                    .scaleOrdinal()
+                    .domain(fracties)
+                    .range(d3.schemePaired);
+
+                d3.selectAll("rect").attr("fill", (d) =>
+                    d.depth === 4 ? colorScale(d.data["Fractie"]) : "red",
+                );
+            } else {
+                d3.selectAll("rect").attr("fill", "red");
+            }
+        });
+
         const onPageLoad = () => {
             xScale.domain([0, widthTreemap]);
             yScale.domain([0, heightTreemap]);
-            createTreemap(root.children);
+            updateTreemap(root);
             updateBreadcrumbs(root);
         };
 
@@ -296,7 +357,6 @@
     });
 </script>
 
-<section>
-    <ul id="breadcrumps"></ul>
-    <svg width="2300" height="1500"> </svg>
-</section>
+<ul id="breadcrumps"></ul>
+<svg width="2300" height="1500"> </svg>
+<input id="fractieFilter" type="checkbox" />checkbox
