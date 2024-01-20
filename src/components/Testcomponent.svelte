@@ -92,13 +92,13 @@
             },
         ).sort((a, b) => a.Beginjaar - b.Beginjaar);
 
-        console.log("sortedResult: ");
+        console.log("sortBeginyear: ");
         console.log(sortBeginyear);
 
         // merge sortBeginyear and sortEndYear by year and month
         const test = sortBeginyear.map((beginjaar) => {
             sortEndYear.map((endYear) => {
-                if (endYear["Beginjaar"] === beginjaar["Beginjaar"]) {
+                if (beginjaar["Beginjaar"] === endYear["Beginjaar"]) {
                     // check if sortEndYear contains new months that do not exist in sortBeginyear and put these in filter array
                     let filter = endYear["children"].filter((months2) => {
                         return !beginjaar["children"].some(
@@ -108,12 +108,6 @@
                     });
 
                     filter = filter.flat();
-
-                    // reassign beginjaar["children"] with beginjaar["children"] and filter to add these extra months for each year
-                    beginjaar["children"] = [
-                        ...beginjaar["children"],
-                        ...filter,
-                    ];
 
                     beginjaar["children"].map((beginmaand) => {
                         endYear["children"].map((endMonth) => {
@@ -134,6 +128,11 @@
                             children: beginmaand["children"],
                         };
                     });
+                    // reassign beginjaar["children"] with beginjaar["children"] and filter to add these extra months for each year
+                    beginjaar["children"] = [
+                        ...beginjaar["children"],
+                        ...filter,
+                    ];
                 }
             });
 
@@ -299,7 +298,20 @@
             d3.selectAll("g")
                 .select("rect")
                 .attr("opacity", "0.2")
-                .attr("fill", (d) => d.depth === 4 && d.data["Eindmaand"] === d.parent.data["Beginmaand"] ? "black" : "red") // if it's a members endmonth, give color black
+                .attr("fill", (d) => {
+                    // // if it's a members endmonth and endyear, give color black
+                    if (
+                        d.depth === 4 &&
+                        d.data["Eindjaar"] ==
+                            d.parent.parent.data["Beginjaar"] &&
+                        d.data["Eindmaand"] === d.parent.data["Beginmaand"]
+                    ) {
+                        return "black";
+                    } else {
+                        return "red";
+                    }
+                })
+
                 .attr("stroke", "black")
                 .attr("x", function (d) {
                     return xScale(d.x0);
