@@ -313,6 +313,7 @@
                 })
 
                 .attr("stroke", "black")
+                .attr("stroke-width", d => d.depth === topLayer ? "3" : "1")
                 .attr("x", function (d) {
                     return xScale(d.x0);
                 })
@@ -352,6 +353,9 @@
             })
 
             d3.selectAll('rect').on('mouseover', (e, d) => {
+                console.log(e.currentTarget)
+                d3.selectAll(this).style("transform", "scale(2)")
+
                 if(d.depth === 4) {
                     d3.select('#tooltip')
                     .style('opacity', 1)
