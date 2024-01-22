@@ -92,8 +92,8 @@
             },
         ).sort((a, b) => a.Beginjaar - b.Beginjaar);
 
-        console.log("sortBeginyear: ");
-        console.log(sortBeginyear);
+        // console.log("sortBeginyear: ");
+        // console.log(sortBeginyear);
 
         // merge sortBeginyear and sortEndYear by year and month
         const test = sortBeginyear.map((beginjaar) => {
@@ -349,7 +349,44 @@
                 } else {
                     return;
                 }
-            });
+            })
+
+            d3.selectAll('rect').on('mouseover', (e, d) => {
+                if(d.depth === 4) {
+                    d3.select('#tooltip')
+                    .style('opacity', 1)
+                    .select('p:nth-of-type(1)')
+                    .text(`Naam: ${d.data["Naam"]}`)
+                    
+                    d3.select('#tooltip')
+                    .select('p:nth-of-type(2)')
+                    .text(`Begindatum: ${d.data["Beginjaar"]} ${d.data["Beginmaand"]}`)
+                    
+                    d3.select('#tooltip')
+                    .select('p:nth-of-type(3)')
+                    .text(`Einddatum: ${d.data["Eindjaar"]} ${d.data["Eindmaand"]}`)
+
+                    d3.select('#tooltip')
+                    .select('p:nth-of-type(4)')
+                    .text(`Einddatum: ${d.data["Fractie"]}`)
+
+                }
+
+            })
+            .on('mousemove', (e, d) => {
+                if(d.depth === 4) {
+                d3.select('#tooltip')
+                .style('opacity', 1)
+                .style('position', 'absolute')
+                .style('left', e.pageX + 15 + 'px')
+				.style('top', e.pageY + 15 + 'px')
+                }
+            })
+
+            .on('mouseout', (e, d) => {
+                d3.select('#tooltip')
+                .style('opacity', '0')
+            })
         };
 
         d3.select("#fractieFilter").on("change", () => {
@@ -385,4 +422,5 @@
 
 <ul id="breadcrumps"></ul>
 <svg width="2300" height="1500"> </svg>
+<div id="tooltip"><p></p><p></p><p></p><p></p></div>
 <input id="fractieFilter" type="checkbox" />checkbox
