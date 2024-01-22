@@ -221,7 +221,7 @@
             topLayer = d3.min(newData, (item) => item.depth);
             // create treemap with new data
             createTreemap(newData);
-
+            // check which filter is on and apply it
             const filterType = checkFilter()
             filterFunction(filterType)
         };
@@ -462,8 +462,10 @@
 <ul id="breadcrumps"></ul>
 <svg width="1200" height="700"> </svg>
 <div id="tooltip">
+    <div>
     <p id="naam"></p>
     <p id="levensduur"></p>
+</div>
     <p id="geslacht"></p>
     <p id="begindatum"></p>
     <p id="einddatum"></p>
@@ -472,3 +474,26 @@
 
 <input type="radio" name="filter" id="fractieFilter" value="fractie" checked><label for="fractieFilter">Fractie</label>
 <input type="radio" name="filter" id="geslachtFilter" value="fractie"><label for="geslachtFilter">geslacht</label>
+
+<style>
+    /* Tooltip */
+    #levensduur {
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    #tooltip div {
+        display: flex;
+        align-items: baseline;
+    }
+
+    #tooltip p{
+        margin: 0;
+        margin-bottom: 0.5rem
+        /* margin: 0rem 0.5rem */
+    }
+
+    #tooltip div p:first-child {
+        margin-right: 0.5rem;
+    }
+</style>
