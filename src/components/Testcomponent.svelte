@@ -221,6 +221,9 @@
             topLayer = d3.min(newData, (item) => item.depth);
             // create treemap with new data
             createTreemap(newData);
+
+            const filterType = checkFilter()
+            filterFunction(filterType)
         };
 
         // get names of the labels
@@ -412,40 +415,38 @@
                 });
         };
 
-        d3.select("#fractieFilter").on("change", () => {
+        d3.selectAll("[name=filter]").on("change", () => {
             // turn on filter
+            const filterType = checkFilter()
+            filterFunction(filterType)
+        });
 
-            const isChecked = d3.select("#fractieFilter").property("checked");
-            if (isChecked) {
-                const fracties = d3.group(data, (d) => d["Fractie"]);
+        const checkFilter = () => {
+            if(d3.select("#fractieFilter").property("checked")){
+                    return 'Fractie'
+                } else {
+                    return 'Geslacht'
+                }
+        };
 
-                const colorScale = d3
+        const filterFunction = (filterType) => {
+            const valuesFilter = d3.group(data, (d) => d[filterType]);
+
+            const colorScale = d3
                     .scaleOrdinal()
-                    .domain(fracties)
-                    .range(d3.schemePaired);
+                    .domain(valuesFilter)
+                    .range(d3.schemePaired)
 
-                d3.selectAll("rect").attr("fill", (d) =>
-                    d.depth === 4
-                        ? colorScale(d.data["Fractie"])
-                        : "transparent",
-                );
-            } else {
                 d3.selectAll("rect").attr("fill", (d) => {
-                    if (d.depth === 4 || d.depth === 1) {
+                    if (d.depth === 4) {
+                        return colorScale(d.data[filterType]);
+                    } else if (d.depth === 1) {
                         return "red";
                     } else {
                         return "transparent";
                     }
                 });
-            }
-        });
-
-        const checkFilter = () => {
-
-        }
-        const filterFunction = () => {
-
-        }
+        };
 
         const onPageLoad = () => {
             xScale.domain([0, widthTreemap]);
@@ -459,7 +460,7 @@
 </script>
 
 <ul id="breadcrumps"></ul>
-<svg width="2300" height="1500"> </svg>
+<svg width="1200" height="700"> </svg>
 <div id="tooltip">
     <p id="naam"></p>
     <p id="levensduur"></p>
@@ -468,4 +469,6 @@
     <p id="einddatum"></p>
     <p id="fractie"></p>
 </div>
-<input id="fractieFilter" type="checkbox" />Fracties
+
+<input type="radio" name="filter" id="fractieFilter" value="fractie" checked><label for="fractieFilter">Fractie</label>
+<input type="radio" name="filter" id="geslachtFilter" value="fractie"><label for="geslachtFilter">geslacht</label>
