@@ -304,9 +304,9 @@
                             d.parent.parent.data["Beginjaar"] &&
                         d.data["Eindmaand"] === d.parent.data["Beginmaand"]
                     ) {
-                        return "0.1";
+                        return "0.2";
                     } else {
-                        return "0.3";
+                        return "0.5";
                     }
                 })
                 .attr("fill", (d) => {
@@ -337,7 +337,7 @@
                 .select("text")
                 .text((d) => {
                     // only show labels on the top layer
-                    if (d.depth === topLayer) {
+                    if (d.depth !== 4 && d.depth === topLayer) {
                         return getLabels(d);
                     }
                 })
@@ -365,23 +365,35 @@
                     if (d.depth === 4) {
                         d3.select("#tooltip")
                             .style("opacity", 1)
-                            .select("p:nth-of-type(1)")
-                            .text(`Naam: ${d.data["Voornamen"]} ${d.data["Naam"]}`);
-
-                        d3.select("#tooltip")
-                            .select("p:nth-of-type(2)")
+                            .select("#naam")
                             .text(
-                                `Begindatum: ${d.data["Beginjaar"]} ${d.data["Beginmaand"]}`,
+                                `Naam: ${d.data["Voornamen"]} ${d.data["Naam"]}`,
                             );
 
                         d3.select("#tooltip")
-                            .select("p:nth-of-type(3)")
+                            .select("#levensduur")
                             .text(
-                                `Einddatum: ${d.data["Eindjaar"]} ${d.data["Eindmaand"]}`,
+                                `${d.data["Geboortejaar"]} - ${d.data["Sterfjaar"]}`,
                             );
 
                         d3.select("#tooltip")
-                            .select("p:nth-of-type(4)")
+                            .select("#geslacht")
+                            .text(`Geslacht: ${d.data["Geslacht"]}`);
+
+                        d3.select("#tooltip")
+                            .select("#begindatum")
+                            .text(
+                                `Begindatum: ${d.data["Beginmaand"]} ${d.data["Beginjaar"]}`,
+                            );
+
+                        d3.select("#tooltip")
+                            .select("#einddatum")
+                            .text(
+                                `Einddatum: ${d.data["Eindmaand"]} ${d.data["Eindjaar"]}`,
+                            );
+
+                        d3.select("#tooltip")
+                            .select("#fractie")
                             .text(`Fractie: ${d.data["Fractie"]}`);
                     }
                 })
@@ -390,8 +402,8 @@
                         d3.select("#tooltip")
                             .style("opacity", 1)
                             .style("position", "absolute")
-                            .style("left", e.pageX + 15 + "px")
-                            .style("top", e.pageY + 15 + "px");
+                            .style("left", e.pageX + 10 + "px")
+                            .style("top", e.pageY + 10 + "px");
                     }
                 })
 
@@ -449,9 +461,11 @@
 <ul id="breadcrumps"></ul>
 <svg width="2300" height="1500"> </svg>
 <div id="tooltip">
-    <p></p>
-    <p></p>
-    <p></p>
-    <p></p>
+    <p id="naam"></p>
+    <p id="levensduur"></p>
+    <p id="geslacht"></p>
+    <p id="begindatum"></p>
+    <p id="einddatum"></p>
+    <p id="fractie"></p>
 </div>
 <input id="fractieFilter" type="checkbox" />Fracties
