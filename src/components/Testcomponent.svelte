@@ -182,8 +182,8 @@
 
         // 2000
         // 1000
-        const widthTreemap = 2000;
-        const heightTreemap = 1000;
+        const widthTreemap = 1200;
+        const heightTreemap = 700;
 
         // create hierarchy of data (node elements) and set value of what needs to be counted in treemap
         const root = d3.hierarchy(finalResult);
@@ -227,7 +227,7 @@
         const getLabels = (d) => {
             // bottom layer (4 / members) is at index 12. The rest at 0
             if (d.depth === 4) {
-                return Object.values(d.data)[12];
+                return Object.values(d.data)[15];
             } else {
                 return Object.values(d.data)[0];
             }
@@ -297,23 +297,28 @@
             // Create rectangles
             d3.selectAll("g")
                 .select("rect")
-                .attr("opacity", "0.2")
-                .attr("fill", (d) => {
-                    // // if it's a members endmonth and endyear, give color black
+                .attr("opacity", (d) => {
                     if (
                         d.depth === 4 &&
                         d.data["Eindjaar"] ==
                             d.parent.parent.data["Beginjaar"] &&
                         d.data["Eindmaand"] === d.parent.data["Beginmaand"]
                     ) {
-                        return "black";
+                        return "0.1";
                     } else {
+                        return "0.3";
+                    }
+                })
+                .attr("fill", (d) => {
+                    if (d.depth === 4 || d.depth === 1) {
                         return "red";
+                    } else {
+                        return "transparent";
                     }
                 })
 
                 .attr("stroke", "black")
-                .attr("stroke-width", d => d.depth === topLayer ? "3" : "1")
+                .attr("stroke-width", (d) => (d.depth === topLayer ? "3" : "1"))
                 .attr("x", function (d) {
                     return xScale(d.x0);
                 })
@@ -350,47 +355,49 @@
                 } else {
                     return;
                 }
-            })
+            });
 
-            d3.selectAll('rect').on('mouseover', (e, d) => {
-                console.log(e.currentTarget)
-                d3.selectAll(this).style("transform", "scale(2)")
+            d3.selectAll("rect")
+                .on("mouseover", (e, d) => {
+                    // console.log(e.currentTarget)
+                    d3.selectAll(this).style("transform", "scale(2)");
 
-                if(d.depth === 4) {
-                    d3.select('#tooltip')
-                    .style('opacity', 1)
-                    .select('p:nth-of-type(1)')
-                    .text(`Naam: ${d.data["Naam"]}`)
-                    
-                    d3.select('#tooltip')
-                    .select('p:nth-of-type(2)')
-                    .text(`Begindatum: ${d.data["Beginjaar"]} ${d.data["Beginmaand"]}`)
-                    
-                    d3.select('#tooltip')
-                    .select('p:nth-of-type(3)')
-                    .text(`Einddatum: ${d.data["Eindjaar"]} ${d.data["Eindmaand"]}`)
+                    if (d.depth === 4) {
+                        d3.select("#tooltip")
+                            .style("opacity", 1)
+                            .select("p:nth-of-type(1)")
+                            .text(`Naam: ${d.data["Voornamen"]} ${d.data["Naam"]}`);
 
-                    d3.select('#tooltip')
-                    .select('p:nth-of-type(4)')
-                    .text(`Einddatum: ${d.data["Fractie"]}`)
+                        d3.select("#tooltip")
+                            .select("p:nth-of-type(2)")
+                            .text(
+                                `Begindatum: ${d.data["Beginjaar"]} ${d.data["Beginmaand"]}`,
+                            );
 
-                }
+                        d3.select("#tooltip")
+                            .select("p:nth-of-type(3)")
+                            .text(
+                                `Einddatum: ${d.data["Eindjaar"]} ${d.data["Eindmaand"]}`,
+                            );
 
-            })
-            .on('mousemove', (e, d) => {
-                if(d.depth === 4) {
-                d3.select('#tooltip')
-                .style('opacity', 1)
-                .style('position', 'absolute')
-                .style('left', e.pageX + 15 + 'px')
-				.style('top', e.pageY + 15 + 'px')
-                }
-            })
+                        d3.select("#tooltip")
+                            .select("p:nth-of-type(4)")
+                            .text(`Fractie: ${d.data["Fractie"]}`);
+                    }
+                })
+                .on("mousemove", (e, d) => {
+                    if (d.depth === 4) {
+                        d3.select("#tooltip")
+                            .style("opacity", 1)
+                            .style("position", "absolute")
+                            .style("left", e.pageX + 15 + "px")
+                            .style("top", e.pageY + 15 + "px");
+                    }
+                })
 
-            .on('mouseout', (e, d) => {
-                d3.select('#tooltip')
-                .style('opacity', '0')
-            })
+                .on("mouseout", (e, d) => {
+                    d3.select("#tooltip").style("opacity", "0");
+                });
         };
 
         d3.select("#fractieFilter").on("change", () => {
@@ -406,12 +413,27 @@
                     .range(d3.schemePaired);
 
                 d3.selectAll("rect").attr("fill", (d) =>
-                    d.depth === 4 ? colorScale(d.data["Fractie"]) : "red",
+                    d.depth === 4
+                        ? colorScale(d.data["Fractie"])
+                        : "transparent",
                 );
             } else {
-                d3.selectAll("rect").attr("fill", "red");
+                d3.selectAll("rect").attr("fill", (d) => {
+                    if (d.depth === 4 || d.depth === 1) {
+                        return "red";
+                    } else {
+                        return "transparent";
+                    }
+                });
             }
         });
+
+        const checkFilter = () => {
+
+        }
+        const filterFunction = () => {
+
+        }
 
         const onPageLoad = () => {
             xScale.domain([0, widthTreemap]);
@@ -426,5 +448,10 @@
 
 <ul id="breadcrumps"></ul>
 <svg width="2300" height="1500"> </svg>
-<div id="tooltip"><p></p><p></p><p></p><p></p></div>
-<input id="fractieFilter" type="checkbox" />checkbox
+<div id="tooltip">
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+</div>
+<input id="fractieFilter" type="checkbox" />Fracties
