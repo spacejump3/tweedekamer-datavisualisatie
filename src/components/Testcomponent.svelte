@@ -528,8 +528,8 @@
     <h2>Legenda</h2>    
 </section>
 
-<input type="radio" name="filter" id="fractieFilter" value="fractie" checked><label for="fractieFilter">Fractie</label>
-<input type="radio" name="filter" id="geslachtFilter" value="fractie"><label for="geslachtFilter">geslacht</label>
+<input type="radio" name="filter" id="geslachtFilter" value="fractie" checked><label for="geslachtFilter">Geslacht</label>
+<input type="radio" name="filter" id="fractieFilter" value="fractie"><label for="fractieFilter">Fractie</label>
 
 <style>
     /* Tooltip */
