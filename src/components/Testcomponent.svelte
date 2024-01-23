@@ -157,7 +157,7 @@
         });
 
         // remove NaN
-        test.pop()
+        test.pop();
 
         // create groups of 15 after all sortEndYear and sortBeginyear has been succefully merged together. creates an internMap
         const grouping2 = d3.group(
@@ -226,53 +226,51 @@
             // create treemap with new data
             createTreemap(newData);
             // check which filter is on and apply it
-            const filterType = checkFilter()
-            filterFunction(filterType)
-            createLegenda(newData)
+            const filterType = checkFilter();
+            filterFunction(filterType);
+            createLegenda(newData);
         };
 
         const createLegenda = (data) => {
-            const filterType = checkFilter()
-            data = data.filter(item => item.depth === 4)
-            const groupFracties = d3.group(data, d => d.data[filterType])
+            const filterType = checkFilter();
+            data = data.filter((item) => item.depth === 4);
+            const groupFracties = d3.group(data, (d) => d.data[filterType]);
 
-            d3.select('section')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
+            d3.select("section")
+                .style("display", "flex")
+                .style("flex-direction", "column");
 
-            const legenda = d3.select("#legenda")
-            .selectAll('#legenda > div')
-            .data(groupFracties)
-            .join(enter => {
-                const group = enter.append('div')
-                group.append('div')
-                group.append('p')
-            })
+            const legenda = d3
+                .select("#legenda")
+                .selectAll("#legenda > div")
+                .data(groupFracties)
+                .join((enter) => {
+                    const group = enter.append("div");
+                    group.append("div");
+                    group.append("p");
+                });
 
-            d3.select('#legenda')
-            .selectAll('#legenda > div')
-            .style('display', 'flex')
-            .style('align-items', 'center')
-            .style('order', d => d[0] === 'overige' ? "3" : "")
+            d3.select("#legenda")
+                .selectAll("#legenda > div")
+                .style("display", "flex")
+                .style("align-items", "center")
+                .style("order", (d) => (d[0] === "overige" ? "3" : ""));
 
-            d3.select('#legenda')
-            .selectAll("#legenda > div")
-            .select('p')
-            .text(d => d[0])
-            .style('margin', '0')
-            .style('margin-left', '0.5rem')
+            d3.select("#legenda")
+                .selectAll("#legenda > div")
+                .select("p")
+                .text((d) => d[0])
+                .style("margin", "0")
+                .style("margin-left", "0.5rem");
             // .attr('x', 60)
 
-            d3.select('#legenda')
-            .selectAll("#legenda > div")
-            .select('div')
-            .style('width', '2rem')
-            .style('height', '2rem')
-            .style('background-color', d => colorScale(d[0]))
-
-
-            
-        }
+            d3.select("#legenda")
+                .selectAll("#legenda > div")
+                .select("div")
+                .style("width", "2rem")
+                .style("height", "2rem")
+                .style("background-color", (d) => colorScale(d[0]));
+        };
 
         // get names of the labels
         const getLabels = (d) => {
@@ -321,6 +319,7 @@
             d3.selectAll("ul a")
                 .attr("href", "#")
                 .text((d) => d["name"])
+                .style("text-decoration", "none")
                 .on("click", (e, d) => {
                     // update treemap after clicking on a breadcrumb
                     updateTreemap(d["node"]);
@@ -465,39 +464,39 @@
 
         d3.selectAll("[name=filter]").on("change", () => {
             // turn on filter
-            const filterType = checkFilter()
-            filterFunction(filterType)
+            const filterType = checkFilter();
+            filterFunction(filterType);
             // create new legenda
-            createLegenda(newData)
+            createLegenda(newData);
         });
 
         const checkFilter = () => {
-            if(d3.select("#fractieFilter").property("checked")){
-                    return 'fractieFilter'
-                } else {
-                    return 'Geslacht'
-                }
+            if (d3.select("#fractieFilter").property("checked")) {
+                return "fractieFilter";
+            } else {
+                return "Geslacht";
+            }
         };
 
         const filterFunction = (filterType) => {
             const valuesFilter = d3.group(data, (d) => d[filterType]);
 
-            let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10]
+            let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10];
 
             colorScale = d3
-                    .scaleOrdinal()
-                    .domain(valuesFilter)
-                    .range(extendedColors)
+                .scaleOrdinal()
+                .domain(valuesFilter)
+                .range(extendedColors);
 
-                d3.selectAll("#treemap rect").attr("fill", (d) => {
-                    if (d.depth === 4) {
-                        return colorScale(d.data[filterType]);
-                    } else if (d.depth === 1) {
-                        return "red";
-                    } else {
-                        return "transparent";
-                    }
-                });
+            d3.selectAll("#treemap rect").attr("fill", (d) => {
+                if (d.depth === 4) {
+                    return colorScale(d.data[filterType]);
+                } else if (d.depth === 1) {
+                    return "red";
+                } else {
+                    return "transparent";
+                }
+            });
         };
 
         const onPageLoad = () => {
@@ -515,9 +514,9 @@
 <svg width="1200" height="700" id="treemap"> </svg>
 <div id="tooltip">
     <div>
-    <p id="naam"></p>
-    <p id="levensduur"></p>
-</div>
+        <p id="naam"></p>
+        <p id="levensduur"></p>
+    </div>
     <p id="geslacht"></p>
     <p id="begindatum"></p>
     <p id="einddatum"></p>
@@ -525,13 +524,28 @@
 </div>
 
 <section id="legenda">
-    <h2>Legenda</h2>    
+    <h2>Legenda</h2>
 </section>
 
-<input type="radio" name="filter" id="geslachtFilter" value="fractie" checked><label for="geslachtFilter">Geslacht</label>
-<input type="radio" name="filter" id="fractieFilter" value="fractie"><label for="fractieFilter">Fractie</label>
+<input
+    type="radio"
+    name="filter"
+    id="geslachtFilter"
+    value="fractie"
+    checked
+/>
+<label for="geslachtFilter">Geslacht</label>
+<input type="radio" name="filter" id="fractieFilter" value="fractie" /><label
+    for="fractieFilter">Fractie</label
+>
 
 <style>
+    /* Breadcrumbs */
+    ul {
+        padding: 0;
+        list-style: none;
+        display: flex;
+    }
     /* Tooltip */
     #levensduur {
         font-size: 0.8rem;
@@ -543,9 +557,9 @@
         align-items: baseline;
     }
 
-    #tooltip p{
+    #tooltip p {
         margin: 0;
-        margin-bottom: 0.5rem
+        margin-bottom: 0.5rem;
         /* margin: 0rem 0.5rem */
     }
 
