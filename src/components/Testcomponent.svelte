@@ -233,6 +233,10 @@
             data = data.filter(item => item.depth === 4)
             const groupFracties = d3.group(data, d => d.data[filterType])
 
+            d3.select('section')
+            .style('display', 'flex')
+            .style('flex-direction', 'column')
+
             const legenda = d3.select("#legenda")
             .selectAll('#legenda > div')
             .data(groupFracties)
@@ -246,7 +250,7 @@
             .selectAll('#legenda > div')
             .style('display', 'flex')
             .style('align-items', 'center')
-            // .attr('transform', (d, i) =>  `translate(0, ${30 * i +20})`)
+            .style('order', d => d[0] === 'overige' ? "3" : "")
 
             d3.select('#legenda')
             .selectAll("#legenda > div")
@@ -466,7 +470,7 @@
 
         const checkFilter = () => {
             if(d3.select("#fractieFilter").property("checked")){
-                    return 'Fractie'
+                    return 'fractieFilter'
                 } else {
                     return 'Geslacht'
                 }
@@ -474,10 +478,13 @@
 
         const filterFunction = (filterType) => {
             const valuesFilter = d3.group(data, (d) => d[filterType]);
+
+            let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10]
+
             colorScale = d3
                     .scaleOrdinal()
                     .domain(valuesFilter)
-                    .range(d3.schemePaired)
+                    .range(extendedColors)
 
                 d3.selectAll("#treemap rect").attr("fill", (d) => {
                     if (d.depth === 4) {
