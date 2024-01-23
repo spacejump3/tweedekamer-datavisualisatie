@@ -156,6 +156,9 @@
             return a.Beginjaar - b.Beginjaar;
         });
 
+        // remove NaN
+        test.pop()
+
         // create groups of 15 after all sortEndYear and sortBeginyear has been succefully merged together. creates an internMap
         const grouping2 = d3.group(
             test,
