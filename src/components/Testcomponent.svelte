@@ -199,16 +199,17 @@
         // create x and y scales
         const xScale = d3.scaleLinear().range([0, widthTreemap]);
         const yScale = d3.scaleLinear().range([0, heightTreemap]);
+        let colorScale;
 
         // the top layer of the treemap that can be clicked on
         let topLayer = 1;
+        let newData;
 
         // get new data when new treemap is about to be created
         const updateTreemap = (d) => {
             // change scale based on new dimensions
             xScale.domain([d.x0, d.x1]);
             yScale.domain([d.y0, d.y1]);
-            let newData;
             // update new data
             // if at top layer (root / 0) only show children. Else also get descendants.
             if (d.depth === 0) {
@@ -224,7 +225,47 @@
             // check which filter is on and apply it
             const filterType = checkFilter()
             filterFunction(filterType)
+            createLegenda(newData)
         };
+
+        const createLegenda = (data) => {
+            const filterType = checkFilter()
+            data = data.filter(item => item.depth === 4)
+            const groupFracties = d3.group(data, d => d.data[filterType])
+
+            const legenda = d3.select("#legenda")
+            .selectAll('#legenda > div')
+            .data(groupFracties)
+            .join(enter => {
+                const group = enter.append('div')
+                group.append('div')
+                group.append('p')
+            })
+
+            d3.select('#legenda')
+            .selectAll('#legenda > div')
+            .style('display', 'flex')
+            .style('align-items', 'center')
+            // .attr('transform', (d, i) =>  `translate(0, ${30 * i +20})`)
+
+            d3.select('#legenda')
+            .selectAll("#legenda > div")
+            .select('p')
+            .text(d => d[0])
+            .style('margin', '0')
+            .style('margin-left', '0.5rem')
+            // .attr('x', 60)
+
+            d3.select('#legenda')
+            .selectAll("#legenda > div")
+            .select('div')
+            .style('width', '2rem')
+            .style('height', '2rem')
+            .style('background-color', d => colorScale(d[0]))
+
+
+            
+        }
 
         // get names of the labels
         const getLabels = (d) => {
@@ -284,7 +325,7 @@
 
         const createTreemap = (data) => {
             // make treemap appear on page
-            d3.select("svg")
+            d3.select("#treemap")
                 .selectAll("g")
                 .data(data)
                 .join(
@@ -298,7 +339,7 @@
                 );
 
             // Create rectangles
-            d3.selectAll("g")
+            d3.selectAll("#treemap g")
                 .select("rect")
                 .attr("opacity", (d) => {
                     if (
@@ -336,7 +377,7 @@
                 });
 
             // create label
-            d3.selectAll("g")
+            d3.selectAll("#treemap g")
                 .select("text")
                 .text((d) => {
                     // only show labels on the top layer
@@ -350,7 +391,7 @@
                 .attr("opacity", "1");
 
             // making it clickable and create new treemap
-            d3.selectAll("g").on("click", (e, d) => {
+            d3.selectAll("#treemap g").on("click", (e, d) => {
                 // stop clicking when clicking on members
                 if (d.depth !== 4) {
                     updateTreemap(d);
@@ -360,7 +401,7 @@
                 }
             });
 
-            d3.selectAll("rect")
+            d3.selectAll("#treemap rect")
                 .on("mouseover", (e, d) => {
                     // console.log(e.currentTarget)
                     d3.selectAll(this).style("transform", "scale(2)");
@@ -376,7 +417,7 @@
                         d3.select("#tooltip")
                             .select("#levensduur")
                             .text(
-                                `${d.data["Geboortejaar"]} - ${d.data["Sterfjaar"]}`,
+                                `(${d.data["Geboortejaar"]} - ${d.data["Sterfjaar"]})`,
                             );
 
                         d3.select("#tooltip")
@@ -419,6 +460,8 @@
             // turn on filter
             const filterType = checkFilter()
             filterFunction(filterType)
+            // create new legenda
+            createLegenda(newData)
         });
 
         const checkFilter = () => {
@@ -431,13 +474,12 @@
 
         const filterFunction = (filterType) => {
             const valuesFilter = d3.group(data, (d) => d[filterType]);
-
-            const colorScale = d3
+            colorScale = d3
                     .scaleOrdinal()
                     .domain(valuesFilter)
                     .range(d3.schemePaired)
 
-                d3.selectAll("rect").attr("fill", (d) => {
+                d3.selectAll("#treemap rect").attr("fill", (d) => {
                     if (d.depth === 4) {
                         return colorScale(d.data[filterType]);
                     } else if (d.depth === 1) {
@@ -460,7 +502,7 @@
 </script>
 
 <ul id="breadcrumps"></ul>
-<svg width="1200" height="700"> </svg>
+<svg width="1200" height="700" id="treemap"> </svg>
 <div id="tooltip">
     <div>
     <p id="naam"></p>
@@ -471,6 +513,10 @@
     <p id="einddatum"></p>
     <p id="fractie"></p>
 </div>
+
+<section id="legenda">
+    <h2>Legenda</h2>    
+</section>
 
 <input type="radio" name="filter" id="fractieFilter" value="fractie" checked><label for="fractieFilter">Fractie</label>
 <input type="radio" name="filter" id="geslachtFilter" value="fractie"><label for="geslachtFilter">geslacht</label>
