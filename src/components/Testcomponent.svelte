@@ -354,7 +354,7 @@
                     ) {
                         return "0.2";
                     } else {
-                        return "0.5";
+                        return "0.6";
                     }
                 })
 
@@ -468,18 +468,31 @@
             }
         };
 
-        const filterFunction = (filterType) => {
-            // create group of unique values of filterType
-            const valuesFilter = d3.group(data, (d) => d[filterType]);
+            const fractieFilter = d3.group(data, (d) => d["fractieFilter"]);
+            const geslachtFilter = d3.group(data, (d) => d["Geslacht"]);
 
-            // create array with colors with built-in colorschemes
+             // create array with colors with built-in colorschemes
             let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10];
 
             // create colorScale
-            colorScale = d3
+            const colorScaleFractie = d3
                 .scaleOrdinal()
-                .domain(valuesFilter)
-                .range(extendedColors);
+                .domain(fractieFilter)
+                .range(extendedColors)
+
+            const colorScaleGeslacht = d3
+                .scaleOrdinal()
+                .domain(geslachtFilter)
+                .range(extendedColors)
+
+
+        const filterFunction = (filterType) => {
+            // choose the right colorScale for filter
+            if(filterType === 'fractieFilter') {
+                colorScale = colorScaleFractie
+            } else if(filterType === 'Geslacht') {
+                colorScale = colorScaleGeslacht
+            }
 
             d3.selectAll("#treemap rect").attr("fill", (d) => {
                 if (d.depth === 4) {
