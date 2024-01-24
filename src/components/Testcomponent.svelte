@@ -357,13 +357,6 @@
                         return "0.5";
                     }
                 })
-                .attr("fill", (d) => {
-                    if (d.depth === 4 || d.depth === 1) {
-                        return "red";
-                    } else {
-                        return "transparent";
-                    }
-                })
 
                 .attr("stroke", "black")
                 .attr("stroke-width", (d) => (d.depth === topLayer ? "3" : "1"))
@@ -494,7 +487,7 @@
                     return colorScale(d.data[filterType]);
                 } else if (d.depth === 1) {
                     // if layer is first treemap (rnage of years) make all rectangles red
-                    return "red";
+                    return "rgb(100, 100, 224)";
                 } else {
                     // all other layers are transparent
                     return "transparent";
@@ -554,7 +547,7 @@
     </section>
 
     <section id="filter">
-        <h2>Filters</h2>
+        <h2>Filter op</h2>
         <div>
         <input
             type="radio"
@@ -575,7 +568,7 @@
 </div>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
 
     p,
     label,
@@ -620,6 +613,7 @@
 
     #filter input:checked + label {
         background-color: rgb(100, 100, 224);
+        color: white;
     }
 
     /* Breadcrumbs */
