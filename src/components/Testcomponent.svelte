@@ -230,7 +230,7 @@
             data = data.filter((item) => item.depth === 4);
             const groupFracties = d3.group(data, (d) => d.data[filterType]);
 
-            d3.select("section")
+            d3.select("#legenda")
                 .style("display", "flex")
                 .style("flex-direction", "column");
 
@@ -256,7 +256,7 @@
                 .text((d) => d[0])
                 .style("margin", "0")
                 .style("margin-left", "0.5rem")
-                .style('font-family', 'Roboto Slab')
+                .style("font-family", "Roboto Slab");
 
             d3.select("#legenda")
                 .selectAll("#legenda > div")
@@ -317,7 +317,7 @@
                 .style("padding", "0.4rem")
                 .style("color", "blue")
                 .style("font-size", "17px")
-                .style("font-family", 'Roboto Slab')
+                .style("font-family", "Roboto Slab")
                 .on("click", (e, d) => {
                     // update treemap after clicking on a breadcrumb
                     updateTreemap(d["node"]);
@@ -354,7 +354,7 @@
                     ) {
                         return "0.2";
                     } else {
-                        return "0.5";
+                        return "0.6";
                     }
                 })
 
@@ -387,8 +387,8 @@
                 .attr("fill", "black")
                 .attr("opacity", "1")
                 .attr("filter", "url(#solid)")
-                .attr('font-size', '13px')
-                .attr('font-family', 'Roboto Slab')
+                .attr("font-size", "13px")
+                .attr("font-family", "Roboto Slab");
 
             // making it clickable and create new treemap
             d3.selectAll("#treemap g").on("click", (e, d) => {
@@ -447,7 +447,9 @@
                 })
 
                 .on("mouseout", (e, d) => {
-                    d3.select("#tooltip").style("opacity", "0");
+                    d3.select("#tooltip")
+                        .style("opacity", "0")
+                        .style("top", "-30%");
                 });
         };
 
@@ -468,18 +470,30 @@
             }
         };
 
+        const fractieFilter = d3.group(data, (d) => d["fractieFilter"]);
+        const geslachtFilter = d3.group(data, (d) => d["Geslacht"]);
+
+        // create array with colors with built-in colorschemes
+        let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10];
+
+        // create colorScale
+        const colorScaleFractie = d3
+            .scaleOrdinal()
+            .domain(fractieFilter)
+            .range(extendedColors);
+
+        const colorScaleGeslacht = d3
+            .scaleOrdinal()
+            .domain(geslachtFilter)
+            .range(extendedColors);
+
         const filterFunction = (filterType) => {
-            // create group of unique values of filterType
-            const valuesFilter = d3.group(data, (d) => d[filterType]);
-
-            // create array with colors with built-in colorschemes
-            let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10];
-
-            // create colorScale
-            colorScale = d3
-                .scaleOrdinal()
-                .domain(valuesFilter)
-                .range(extendedColors);
+            // choose the right colorScale for filter
+            if (filterType === "fractieFilter") {
+                colorScale = colorScaleFractie;
+            } else if (filterType === "Geslacht") {
+                colorScale = colorScaleGeslacht;
+            }
 
             d3.selectAll("#treemap rect").attr("fill", (d) => {
                 if (d.depth === 4) {
@@ -505,18 +519,19 @@
         onPageLoad();
     });
 </script>
-<ul id="breadcrumps"></ul>
+
+<ul class="breadcrumps"></ul>
 <svg width={widthTreemap + 200} height={heightTreemap + 30} id="treemap">
     <defs>
         <filter x="0" y="0" width="1" height="1" id="solid">
-          <feFlood flood-color="white" result="bg" />
-          <feMerge>
-            <feMergeNode in="bg"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
+            <feFlood flood-color="white" result="bg" />
+            <feMerge>
+                <feMergeNode in="bg" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
         </filter>
-      </defs>
-     </svg>
+    </defs>
+</svg>
 <div id="tooltip">
     <div>
         <p>Naam:</p>
@@ -549,31 +564,31 @@
     <section id="filter">
         <h2>Filter op</h2>
         <div>
-        <input
-            type="radio"
-            name="filter"
-            id="geslachtFilter"
-            value="fractie"
-            checked
-        />
-        <label for="geslachtFilter">Geslacht</label>
-        <input
-            type="radio"
-            name="filter"
-            id="fractieFilter"
-            value="fractie"
-        /><label for="fractieFilter">Fractie</label>
+            <input
+                type="radio"
+                name="filter"
+                id="geslachtFilter"
+                value="fractie"
+                checked
+            />
+            <label for="geslachtFilter">Geslacht</label>
+            <input
+                type="radio"
+                name="filter"
+                id="fractieFilter"
+                value="fractie"
+            /><label for="fractieFilter">Fractie</label>
         </div>
     </section>
 </div>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
+    @import url("https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap");
 
     p,
     label,
     h2 {
-        font-family: 'Roboto Slab', serif;
+        font-family: "Roboto Slab", serif;
     }
 
     h2 {
@@ -581,14 +596,13 @@
         margin-bottom: 1rem;
     }
 
-    /* container legenda and filter */ 
+    /* container legenda and filter */
     #container {
         display: grid;
         grid-template-rows: 1fr;
         grid-template-columns: 1fr 1fr 1fr;
         width: 1100px;
         margin-bottom: 5rem;
-        
     }
     /* Filters */
     #filter {
