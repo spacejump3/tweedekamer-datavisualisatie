@@ -2,6 +2,9 @@
     import { onMount } from "svelte";
     import * as d3 from "d3";
 
+    const widthTreemap = 1100;
+    const heightTreemap = 600;
+
     onMount(async () => {
         const data = await d3.json("TweedeKamer_perioden.json");
         data.forEach((item) => (item.value = 1));
@@ -25,15 +28,11 @@
             if ("Eindmaand" in data[i]) {
                 // Create a new key and assign the value of the old key
                 data[i]["Eindmaand"] = getMonthName(data[i]["Eindmaand"]);
-                // Delete the old key
-                // delete data[i]["Naam (Uit personen))"];
             }
 
             if ("Beginmaand" in data[i]) {
                 // Create a new key and assign the value of the old key
                 data[i]["Beginmaand"] = getMonthName(data[i]["Beginmaand"]);
-                // Delete the old key
-                // delete data[i]["Naam (Uit personen))"];
             }
         }
 
@@ -92,11 +91,8 @@
             },
         ).sort((a, b) => a.Beginjaar - b.Beginjaar);
 
-        // console.log("sortBeginyear: ");
-        // console.log(sortBeginyear);
-
         // merge sortBeginyear and sortEndYear by year and month
-        const test = sortBeginyear.map((beginjaar) => {
+        const mergedData = sortBeginyear.map((beginjaar) => {
             sortEndYear.map((endYear) => {
                 if (beginjaar["Beginjaar"] === endYear["Beginjaar"]) {
                     // check if sortEndYear contains new months that do not exist in sortBeginyear and put these in filter array
@@ -151,17 +147,17 @@
         );
 
         // push these new years into array and sort them
-        test.push(...newEndYears);
-        test.sort((a, b) => {
+        mergedData.push(...newEndYears);
+        mergedData.sort((a, b) => {
             return a.Beginjaar - b.Beginjaar;
         });
 
         // remove NaN
-        test.pop();
+        mergedData.pop();
 
         // create groups of 15 after all sortEndYear and sortBeginyear has been succefully merged together. creates an internMap
-        const grouping2 = d3.group(
-            test,
+        const mergedDataGroup = d3.group(
+            mergedData,
             (d) => Math.floor((parseInt(d["Beginjaar"], 10) - 1815) / 15), // Group every 15 years starting from 1815
         );
 
@@ -173,20 +169,18 @@
         };
 
         // turn internMap of grouping into an array
-        const tweedeKamerData = Array.from(grouping2, ([Group, children]) => {
-            return {
-                group: nameGroupByYears(children),
-                children: children,
-            };
-        });
+        const tweedeKamerData = Array.from(
+            mergedDataGroup,
+            ([Group, children]) => {
+                return {
+                    group: nameGroupByYears(children),
+                    children: children,
+                };
+            },
+        );
 
         // create object with a root to make it ready for a treemap
-        const finalResult = { year: "root", children: tweedeKamerData };
-
-        // 2000
-        // 1000
-        const widthTreemap = 1200;
-        const heightTreemap = 700;
+        const finalResult = { year: "Root", children: tweedeKamerData };
 
         // create hierarchy of data (node elements) and set value of what needs to be counted in treemap
         const root = d3.hierarchy(finalResult);
@@ -240,8 +234,7 @@
                 .style("display", "flex")
                 .style("flex-direction", "column");
 
-            const legenda = d3
-                .select("#legenda")
+            d3.select("#legenda")
                 .selectAll("#legenda > div")
                 .data(groupFracties)
                 .join((enter) => {
@@ -254,6 +247,7 @@
                 .selectAll("#legenda > div")
                 .style("display", "flex")
                 .style("align-items", "center")
+                .style("margin-bottom", "0.5rem")
                 .style("order", (d) => (d[0] === "overige" ? "3" : ""));
 
             d3.select("#legenda")
@@ -261,14 +255,14 @@
                 .select("p")
                 .text((d) => d[0])
                 .style("margin", "0")
-                .style("margin-left", "0.5rem");
-            // .attr('x', 60)
+                .style("margin-left", "0.5rem")
+                .style('font-family', 'Roboto Slab')
 
             d3.select("#legenda")
                 .selectAll("#legenda > div")
                 .select("div")
-                .style("width", "2rem")
-                .style("height", "2rem")
+                .style("width", "1rem")
+                .style("height", "1rem")
                 .style("background-color", (d) => colorScale(d[0]));
         };
 
@@ -320,6 +314,10 @@
                 .attr("href", "#")
                 .text((d) => d["name"])
                 .style("text-decoration", "none")
+                .style("padding", "0.4rem")
+                .style("color", "blue")
+                .style("font-size", "17px")
+                .style("font-family", 'Roboto Slab')
                 .on("click", (e, d) => {
                     // update treemap after clicking on a breadcrumb
                     updateTreemap(d["node"]);
@@ -394,7 +392,10 @@
                 .attr("x", (d) => xScale(d.x0) + 10)
                 .attr("y", (d) => yScale(d.y0) + 20)
                 .attr("fill", "black")
-                .attr("opacity", "1");
+                .attr("opacity", "1")
+                .attr("filter", "url(#solid)")
+                .attr('font-size', '13px')
+                .attr('font-family', 'Roboto Slab')
 
             // making it clickable and create new treemap
             d3.selectAll("#treemap g").on("click", (e, d) => {
@@ -409,16 +410,11 @@
 
             d3.selectAll("#treemap rect")
                 .on("mouseover", (e, d) => {
-                    // console.log(e.currentTarget)
-                    d3.selectAll(this).style("transform", "scale(2)");
-
                     if (d.depth === 4) {
                         d3.select("#tooltip")
                             .style("opacity", 1)
                             .select("#naam")
-                            .text(
-                                `Naam: ${d.data["Voornamen"]} ${d.data["Naam"]}`,
-                            );
+                            .text(`${d.data["Voornamen"]} ${d.data["Naam"]}`);
 
                         d3.select("#tooltip")
                             .select("#levensduur")
@@ -428,23 +424,23 @@
 
                         d3.select("#tooltip")
                             .select("#geslacht")
-                            .text(`Geslacht: ${d.data["Geslacht"]}`);
+                            .text(`${d.data["Geslacht"]}`);
 
                         d3.select("#tooltip")
                             .select("#begindatum")
                             .text(
-                                `Begindatum: ${d.data["Beginmaand"]} ${d.data["Beginjaar"]}`,
+                                `${d.data["Beginmaand"]} ${d.data["Beginjaar"]}`,
                             );
 
                         d3.select("#tooltip")
                             .select("#einddatum")
                             .text(
-                                `Einddatum: ${d.data["Eindmaand"]} ${d.data["Eindjaar"]}`,
+                                `${d.data["Eindmaand"]} ${d.data["Eindjaar"]}`,
                             );
 
                         d3.select("#tooltip")
                             .select("#fractie")
-                            .text(`Fractie: ${d.data["Fractie"]}`);
+                            .text(`${d.data["Fractie"]}`);
                     }
                 })
                 .on("mousemove", (e, d) => {
@@ -471,6 +467,7 @@
         });
 
         const checkFilter = () => {
+            // check which filter is checked
             if (d3.select("#fractieFilter").property("checked")) {
                 return "fractieFilter";
             } else {
@@ -479,10 +476,13 @@
         };
 
         const filterFunction = (filterType) => {
+            // create group of unique values of filterType
             const valuesFilter = d3.group(data, (d) => d[filterType]);
 
+            // create array with colors with built-in colorschemes
             let extendedColors = [...d3.schemePaired, ...d3.schemeTableau10];
 
+            // create colorScale
             colorScale = d3
                 .scaleOrdinal()
                 .domain(valuesFilter)
@@ -490,10 +490,13 @@
 
             d3.selectAll("#treemap rect").attr("fill", (d) => {
                 if (d.depth === 4) {
+                    // use filters on members rectangles
                     return colorScale(d.data[filterType]);
                 } else if (d.depth === 1) {
+                    // if layer is first treemap (rnage of years) make all rectangles red
                     return "red";
                 } else {
+                    // all other layers are transparent
                     return "transparent";
                 }
             });
@@ -509,37 +512,116 @@
         onPageLoad();
     });
 </script>
-
 <ul id="breadcrumps"></ul>
-<svg width="1200" height="700" id="treemap"> </svg>
+<svg width={widthTreemap + 200} height={heightTreemap + 30} id="treemap">
+    <defs>
+        <filter x="0" y="0" width="1" height="1" id="solid">
+          <feFlood flood-color="white" result="bg" />
+          <feMerge>
+            <feMergeNode in="bg"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+     </svg>
 <div id="tooltip">
     <div>
+        <p>Naam:</p>
         <p id="naam"></p>
         <p id="levensduur"></p>
     </div>
-    <p id="geslacht"></p>
-    <p id="begindatum"></p>
-    <p id="einddatum"></p>
-    <p id="fractie"></p>
+    <div>
+        <p>Geslacht:</p>
+        <p id="geslacht"></p>
+    </div>
+    <div>
+        <p>Begindatum:</p>
+        <p id="begindatum"></p>
+    </div>
+    <div>
+        <p>Einddatum:</p>
+        <p id="einddatum"></p>
+    </div>
+    <div>
+        <p>Fractie:</p>
+        <p id="fractie"></p>
+    </div>
 </div>
 
-<section id="legenda">
-    <h2>Legenda</h2>
-</section>
+<div id="container">
+    <section id="legenda">
+        <h2>Legenda</h2>
+    </section>
 
-<input
-    type="radio"
-    name="filter"
-    id="geslachtFilter"
-    value="fractie"
-    checked
-/>
-<label for="geslachtFilter">Geslacht</label>
-<input type="radio" name="filter" id="fractieFilter" value="fractie" /><label
-    for="fractieFilter">Fractie</label
->
+    <section id="filter">
+        <h2>Filters</h2>
+        <div>
+        <input
+            type="radio"
+            name="filter"
+            id="geslachtFilter"
+            value="fractie"
+            checked
+        />
+        <label for="geslachtFilter">Geslacht</label>
+        <input
+            type="radio"
+            name="filter"
+            id="fractieFilter"
+            value="fractie"
+        /><label for="fractieFilter">Fractie</label>
+        </div>
+    </section>
+</div>
 
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap');
+
+    p,
+    label,
+    h2 {
+        font-family: 'Roboto Slab', serif;
+    }
+
+    h2 {
+        margin: 0;
+        margin-bottom: 1rem;
+    }
+
+    /* container legenda and filter */ 
+    #container {
+        display: grid;
+        grid-template-rows: 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+        width: 1100px;
+        margin-bottom: 5rem;
+        
+    }
+    /* Filters */
+    #filter {
+        justify-self: center;
+        text-align: center;
+    }
+
+    #filter div {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    #filter label {
+        background-color: rgb(247, 247, 247);
+        border: solid rgb(100, 100, 224);
+        padding: 1rem;
+    }
+
+    #filter input {
+        display: none;
+    }
+
+    #filter input:checked + label {
+        background-color: rgb(100, 100, 224);
+    }
+
     /* Breadcrumbs */
     ul {
         padding: 0;
@@ -552,6 +634,15 @@
         text-align: center;
     }
 
+    #tooltip {
+        position: absolute;
+        left: -20%;
+        top: -20%;
+        background-color: rgb(100, 100, 224);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
     #tooltip div {
         display: flex;
         align-items: baseline;
@@ -560,10 +651,14 @@
     #tooltip p {
         margin: 0;
         margin-bottom: 0.5rem;
-        /* margin: 0rem 0.5rem */
+        color: white;
     }
 
     #tooltip div p:first-child {
         margin-right: 0.5rem;
+    }
+
+    #tooltip div p:nth-child(2) {
+        font-weight: bold;
     }
 </style>
