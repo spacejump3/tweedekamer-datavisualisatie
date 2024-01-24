@@ -447,7 +447,9 @@
                 })
 
                 .on("mouseout", (e, d) => {
-                    d3.select("#tooltip").style("opacity", "0");
+                    d3.select("#tooltip")
+                    .style("opacity", "0")
+                    .style("top", "-30%")
                 });
         };
 
