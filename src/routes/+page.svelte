@@ -7,7 +7,7 @@
         <header>
             <h1>Zetelwisselingen door de jaren heen</h1>
             <p>
-                In deze visualisatie kan je alle zetelperiodes in de tweede
+                In deze visualisatie kan je alle zetelwisselingen in de tweede
                 kamer zien. Wat we hiermee bedoelen is dat je exact kan zien
                 hoeveel leden zijn begonnen, en weg zijn gegaan. Dit kan je zien
                 in elke periode. Vanaf de tweede laag; de personen met een felle
