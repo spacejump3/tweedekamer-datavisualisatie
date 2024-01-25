@@ -20,7 +20,7 @@
             <h2>Kleuren</h2>
             <p>
                 De transparantie van de kleur is gebaseerd of iemand is begonnen
-                of gestop
+                of gestopt
             </p>
 
             <div class="container">
