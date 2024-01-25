@@ -1,5 +1,5 @@
 <script>
-    import Testcomponent from "../components/Testcomponent.svelte";
+    import Visualisatie from "../components/Visualisatie.svelte";
 </script>
 
 <body>
@@ -36,7 +36,7 @@
         </section>
     </div>
 
-    <Testcomponent />
+    <Visualisatie />
 </body>
 
 <style>
