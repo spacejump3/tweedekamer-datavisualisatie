@@ -520,7 +520,7 @@
     });
 </script>
 
-<ul class="breadcrumps"></ul>
+<ul id="breadcrumps"></ul>
 <svg width={widthTreemap + 200} height={heightTreemap + 30} id="treemap">
     <defs>
         <filter x="0" y="0" width="1" height="1" id="solid">
